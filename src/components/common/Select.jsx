@@ -36,21 +36,28 @@ const Select = forwardRef(({
         `}
         {...props}
       >
-        {placeholder && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
+        {options.length > 0 ? (
+          // When options are provided, render them directly
+          options.map((option) => (
+            <option 
+              key={option.value} 
+              value={option.value}
+              disabled={option.disabled}
+            >
+              {option.label}
+            </option>
+          ))
+        ) : (
+          // When no options provided, render children (legacy support)
+          <>
+            {placeholder && (
+              <option value="" disabled>
+                {placeholder}
+              </option>
+            )}
+            {props.children}
+          </>
         )}
-        
-        {options.map((option) => (
-          <option 
-            key={option.value} 
-            value={option.value}
-            disabled={option.disabled}
-          >
-            {option.label}
-          </option>
-        ))}
       </select>
       
       {error && (

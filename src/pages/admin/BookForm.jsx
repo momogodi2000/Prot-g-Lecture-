@@ -295,14 +295,14 @@ const BookForm = () => {
                   onChange={handleChange}
                   required
                   className="flex-1"
-                >
-                  <option value="">Sélectionner un auteur</option>
-                  {authors.map(author => (
-                    <option key={author.id} value={author.id}>
-                      {author.nom_complet}
-                    </option>
-                  ))}
-                </Select>
+                  options={[
+                    { value: '', label: 'Sélectionner un auteur' },
+                    ...authors.map(author => ({
+                      value: author.id,
+                      label: author.nom_complet
+                    }))
+                  ]}
+                />
                 <Button
                   type="button"
                   variant="outline"
@@ -349,14 +349,14 @@ const BookForm = () => {
                   onChange={handleChange}
                   required
                   className="flex-1"
-                >
-                  <option value="">Sélectionner une catégorie</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.nom}
-                    </option>
-                  ))}
-                </Select>
+                  options={[
+                    { value: '', label: 'Sélectionner une catégorie' },
+                    ...categories.map(category => ({
+                      value: category.id,
+                      label: category.nom
+                    }))
+                  ]}
+                />
                 <Button
                   type="button"
                   variant="outline"
