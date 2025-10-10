@@ -34,7 +34,7 @@ const BookForm = () => {
     isbn: '',
     editeur: '',
     annee_publication: '',
-    langue: 'fr',
+    langue: 'FR',
     nombre_pages: '',
     description: '',
     couverture_url: '',
@@ -58,7 +58,7 @@ const BookForm = () => {
   const loadAuthorsAndCategories = () => {
     try {
       const authorsData = db.query('SELECT * FROM auteurs ORDER BY nom_complet');
-      const categoriesData = db.query('SELECT * FROM categories ORDER BY nom');
+      const categoriesData = db.query('SELECT * FROM categories ORDER BY ordre_affichage, nom');
       setAuthors(authorsData);
       setCategories(categoriesData);
     } catch (error) {
@@ -422,10 +422,12 @@ const BookForm = () => {
               value={formData.langue}
               onChange={handleChange}
             >
-              <option value="fr">Français</option>
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="de">Deutsch</option>
+              <option value="">Sélectionner une langue</option>
+              <option value="FR">Français</option>
+              <option value="EN">Anglais</option>
+              <option value="ES">Espagnol</option>
+              <option value="DE">Allemand</option>
+              <option value="AUTRE">Autre</option>
             </Select>
 
             <Input
@@ -472,10 +474,10 @@ const BookForm = () => {
               value={formData.statut}
               onChange={handleChange}
             >
+              <option value="">Sélectionner un statut</option>
               <option value="disponible">Disponible</option>
-              <option value="en_pret">En Prêt</option>
-              <option value="epuise">Épuisé</option>
-              <option value="retire">Retiré</option>
+              <option value="reserve_complet">Complet</option>
+              <option value="maintenance">Maintenance</option>
             </Select>
           </div>
 
