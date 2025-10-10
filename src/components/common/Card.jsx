@@ -33,35 +33,45 @@ const Card = ({
 };
 
 // Card sub-components
-Card.Header = ({ children, className = '' }) => (
+const CardHeader = ({ children, className = '' }) => (
   <div className={`mb-4 ${className}`}>
     {children}
   </div>
 );
+CardHeader.displayName = 'Card.Header';
+Card.Header = CardHeader;
 
-Card.Title = ({ children, className = '' }) => (
+const CardTitle = ({ children, className = '' }) => (
   <h3 className={`text-lg font-semibold text-gray-900 dark:text-white ${className}`}>
     {children}
   </h3>
 );
+CardTitle.displayName = 'Card.Title';
+Card.Title = CardTitle;
 
-Card.Description = ({ children, className = '' }) => (
+const CardDescription = ({ children, className = '' }) => (
   <p className={`text-sm text-gray-600 dark:text-gray-400 ${className}`}>
     {children}
   </p>
 );
+CardDescription.displayName = 'Card.Description';
+Card.Description = CardDescription;
 
-Card.Content = ({ children, className = '' }) => (
+const CardContent = ({ children, className = '' }) => (
   <div className={className}>
     {children}
   </div>
 );
+CardContent.displayName = 'Card.Content';
+Card.Content = CardContent;
 
-Card.Footer = ({ children, className = '' }) => (
+const CardFooter = ({ children, className = '' }) => (
   <div className={`mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 ${className}`}>
     {children}
   </div>
 );
+CardFooter.displayName = 'Card.Footer';
+Card.Footer = CardFooter;
 
 export default Card;
 

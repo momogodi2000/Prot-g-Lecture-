@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 export const useBooks = (filters = {}) => {
   const { db } = useDatabase();
+  const { currentAdmin } = useAuth();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -94,7 +95,6 @@ export const useBooks = (filters = {}) => {
 
   const createBook = (bookData) => {
     try {
-      const { currentAdmin } = useAuth();
       const query = `
         INSERT INTO livres (
           isbn, titre, auteur_id, resume, categorie_id, 
