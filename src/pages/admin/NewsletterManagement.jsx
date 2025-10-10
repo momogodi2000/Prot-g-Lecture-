@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Plus, Mail, Download } from 'lucide-react';
 import SearchBar from '../../components/common/SearchBar';
 import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
@@ -8,6 +7,10 @@ import Badge from '../../components/common/Badge';
 import Loader from '../../components/common/Loader';
 import { useNewsletter } from '../../hooks/useNewsletter';
 import { formatDate } from '../../utils/formatters';
+
+const LogoIcon = ({ className }) => (
+  <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
+);
 
 const NewsletterManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,10 +59,10 @@ const NewsletterManagement = () => {
           </p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline" icon={Download} onClick={exportSubscribers}>
+          <Button variant="outline" icon={LogoIcon} onClick={exportSubscribers}>
             Exporter
           </Button>
-          <Button icon={Plus}>
+          <Button icon={LogoIcon}>
             Nouvelle Campagne
           </Button>
         </div>
@@ -102,7 +105,7 @@ const NewsletterManagement = () => {
       ) : subscribers.length === 0 ? (
         <Card>
           <div className="text-center py-12">
-            <Mail className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <LogoIcon className="h-16 w-16 mx-auto mb-4" />
             <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">
               Aucun abonné trouvé
             </p>

@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Plus, Grid, List as ListIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SearchBar from '../../components/common/SearchBar';
 import BookGrid from '../../components/books/BookGrid';
 import BookFilters from '../../components/books/BookFilters';
 import Button from '../../components/common/Button';
 import { useBooks } from '../../hooks/useBooks';
+
+const LogoIcon = ({ className }) => (
+  <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
+);
 
 const BooksManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +35,7 @@ const BooksManagement = () => {
           </p>
         </div>
         <Link to="/admin/books/new">
-          <Button icon={Plus}>
+          <Button icon={LogoIcon}>
             Ajouter un Livre
           </Button>
         </Link>
@@ -68,7 +71,7 @@ const BooksManagement = () => {
               <Button
                 variant={viewMode === 'grid' ? 'primary' : 'ghost'}
                 size="sm"
-                icon={Grid}
+                icon={LogoIcon}
                 onClick={() => setViewMode('grid')}
               >
                 Grille
@@ -76,7 +79,7 @@ const BooksManagement = () => {
               <Button
                 variant={viewMode === 'list' ? 'primary' : 'ghost'}
                 size="sm"
-                icon={ListIcon}
+                icon={LogoIcon}
                 onClick={() => setViewMode('list')}
               >
                 Liste

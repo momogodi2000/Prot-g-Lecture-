@@ -19,12 +19,17 @@ import InitAdmin from './pages/InitAdmin';
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
 import BooksManagement from './pages/admin/BooksManagement';
-import ReservationsManagement from './pages/admin/ReservationsManagement';
+import BookForm from './pages/admin/BookForm';
 import GroupsManagement from './pages/admin/GroupsManagement';
+import GroupForm from './pages/admin/GroupForm';
+import ReservationsManagement from './pages/admin/ReservationsManagement';
 import EventsManagement from './pages/admin/EventsManagement';
 import NewsManagement from './pages/admin/NewsManagement';
+import NewsForm from './pages/admin/NewsForm';
 import ContactManagement from './pages/admin/ContactManagement';
 import NewsletterManagement from './pages/admin/NewsletterManagement';
+import Statistics from './pages/admin/Statistics';
+import UsersManagement from './pages/admin/UsersManagement';
 import Settings from './pages/admin/Settings';
 
 // Layouts
@@ -79,12 +84,20 @@ function App() {
                 >
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="books" element={<BooksManagement />} />
+                  <Route path="books/new" element={<BookForm />} />
+                  <Route path="books/:id/edit" element={<BookForm />} />
                   <Route path="reservations" element={<ReservationsManagement />} />
                   <Route path="groups" element={<GroupsManagement />} />
+                  <Route path="groups/new" element={<GroupForm />} />
+                  <Route path="groups/:id/edit" element={<GroupForm />} />
                   <Route path="events" element={<EventsManagement />} />
                   <Route path="news" element={<NewsManagement />} />
+                  <Route path="news/new" element={<NewsForm />} />
+                  <Route path="news/:id/edit" element={<NewsForm />} />
                   <Route path="messages" element={<ContactManagement />} />
                   <Route path="newsletter" element={<NewsletterManagement />} />
+                  <Route path="statistics" element={<Statistics />} />
+                  <Route path="users" element={<UsersManagement />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>
               </Routes>

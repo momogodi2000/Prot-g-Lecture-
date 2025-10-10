@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Save, Database, Bell, Globe, Shield } from 'lucide-react';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
 import { useDatabase } from '../../contexts/DatabaseContext';
 import toast from 'react-hot-toast';
+
+const LogoIcon = ({ className }) => (
+  <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
+);
 
 const Settings = () => {
   const { db } = useDatabase();
@@ -47,181 +50,168 @@ const Settings = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* General Settings */}
-        <Card>
-          <Card.Header>
-            <div className="flex items-center space-x-2">
-              <Globe className="h-5 w-5 text-primary-500" />
-              <Card.Title>Informations Générales</Card.Title>
-            </div>
-          </Card.Header>
-          <Card.Content>
-            <div className="space-y-4">
-              <Input
-                label="Nom du Centre"
-                defaultValue="Centre de Lecture Protégé QV"
-              />
-              <Input
-                label="Adresse"
-                defaultValue="Rond-Point Express, Yaoundé"
-              />
-              <Input
-                label="Téléphone"
-                defaultValue="+237 6XX XX XX XX"
-              />
-              <Input
-                label="Email"
-                type="email"
-                defaultValue="contact@protegeqv.org"
-              />
-            </div>
-          </Card.Content>
+        <Card padding="lg">
+          <div className="flex items-center space-x-2 mb-6">
+            <LogoIcon className="h-5 w-5" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Informations Générales</h2>
+          </div>
+          <div className="space-y-4">
+            <Input
+              label="Nom du Centre"
+              defaultValue="Centre de Lecture Protégé QV"
+              icon={LogoIcon}
+            />
+            <Input
+              label="Adresse"
+              defaultValue="Rond-Point Express, Yaoundé"
+              icon={LogoIcon}
+            />
+            <Input
+              label="Téléphone"
+              defaultValue="+237 6XX XX XX XX"
+              icon={LogoIcon}
+            />
+            <Input
+              label="Email"
+              type="email"
+              defaultValue="contact@protegeqv.org"
+              icon={LogoIcon}
+            />
+          </div>
         </Card>
 
         {/* Database Settings */}
-        <Card>
-          <Card.Header>
-            <div className="flex items-center space-x-2">
-              <Database className="h-5 w-5 text-primary-500" />
-              <Card.Title>Base de Données</Card.Title>
-            </div>
-          </Card.Header>
-          <Card.Content>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  Sauvegardez ou restaurez votre base de données
-                </p>
-                <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    fullWidth
-                    onClick={handleBackup}
-                    icon={Database}
-                  >
-                    Télécharger Sauvegarde
-                  </Button>
-                  
-                  <div>
-                    <input
-                      type="file"
-                      accept=".db,.sqlite,.sqlite3"
-                      onChange={handleRestore}
-                      className="hidden"
-                      id="restore-file"
-                    />
-                    <label htmlFor="restore-file">
-                      <Button
-                        as="span"
-                        variant="outline"
-                        fullWidth
-                        icon={Database}
-                      >
-                        Restaurer depuis un Fichier
-                      </Button>
-                    </label>
-                  </div>
+        <Card padding="lg">
+          <div className="flex items-center space-x-2 mb-6">
+            <LogoIcon className="h-5 w-5" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Base de Données</h2>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Sauvegardez ou restaurez votre base de données
+              </p>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  fullWidth
+                  onClick={handleBackup}
+                  icon={LogoIcon}
+                >
+                  Télécharger Sauvegarde
+                </Button>
+                
+                <div>
+                  <input
+                    type="file"
+                    accept=".db,.sqlite,.sqlite3"
+                    onChange={handleRestore}
+                    className="hidden"
+                    id="restore-file"
+                  />
+                  <label htmlFor="restore-file" className="block">
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      icon={LogoIcon}
+                      onClick={() => document.getElementById('restore-file').click()}
+                    >
+                      Restaurer depuis un Fichier
+                    </Button>
+                  </label>
                 </div>
               </div>
+            </div>
 
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Statut</span>
-                  <span className="text-green-600 font-medium">✓ Connectée</span>
-                </div>
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">Statut</span>
+                <span className="text-green-600 font-medium">✓ Connectée</span>
               </div>
             </div>
-          </Card.Content>
+          </div>
         </Card>
 
         {/* Notification Settings */}
-        <Card>
-          <Card.Header>
-            <div className="flex items-center space-x-2">
-              <Bell className="h-5 w-5 text-primary-500" />
-              <Card.Title>Notifications</Card.Title>
-            </div>
-          </Card.Header>
-          <Card.Content>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Notifications Email
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Recevoir des emails pour les événements importants
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="h-5 w-5 text-primary-500 rounded focus:ring-primary-500"
-                />
+        <Card padding="lg">
+          <div className="flex items-center space-x-2 mb-6">
+            <LogoIcon className="h-5 w-5" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Notifications</h2>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Notifications Email
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Recevoir des emails pour les événements importants
+                </p>
               </div>
+              <input
+                type="checkbox"
+                defaultChecked
+                className="h-5 w-5 text-primary-500 rounded focus:ring-primary-500"
+              />
+            </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Notifications Push
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Notifications dans le navigateur
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="h-5 w-5 text-primary-500 rounded focus:ring-primary-500"
-                />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Notifications Push
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Notifications dans le navigateur
+                </p>
               </div>
+              <input
+                type="checkbox"
+                defaultChecked
+                className="h-5 w-5 text-primary-500 rounded focus:ring-primary-500"
+              />
             </div>
-          </Card.Content>
+          </div>
         </Card>
 
         {/* Security Settings */}
-        <Card>
-          <Card.Header>
-            <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-primary-500" />
-              <Card.Title>Sécurité</Card.Title>
-            </div>
-          </Card.Header>
-          <Card.Content>
-            <div className="space-y-4">
-              <Select
-                label="Durée de Session"
-                defaultValue="30"
-                options={[
-                  { value: '15', label: '15 minutes' },
-                  { value: '30', label: '30 minutes' },
-                  { value: '60', label: '1 heure' },
-                  { value: '120', label: '2 heures' }
-                ]}
-              />
+        <Card padding="lg">
+          <div className="flex items-center space-x-2 mb-6">
+            <LogoIcon className="h-5 w-5" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Sécurité</h2>
+          </div>
+          <div className="space-y-4">
+            <Select
+              label="Durée de Session"
+              defaultValue="30"
+            >
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">1 heure</option>
+              <option value="120">2 heures</option>
+            </Select>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Authentification à 2 facteurs
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Sécurité renforcée
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 text-primary-500 rounded focus:ring-primary-500"
-                />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Authentification à 2 facteurs
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Sécurité renforcée
+                </p>
               </div>
+              <input
+                type="checkbox"
+                className="h-5 w-5 text-primary-500 rounded focus:ring-primary-500"
+              />
             </div>
-          </Card.Content>
+          </div>
         </Card>
       </div>
 
       {/* Save Button */}
       <div className="mt-8 flex justify-end">
         <Button
-          icon={Save}
+          icon={LogoIcon}
           loading={saving}
           onClick={() => {
             setSaving(true);

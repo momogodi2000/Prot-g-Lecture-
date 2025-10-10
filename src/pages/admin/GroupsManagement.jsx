@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SearchBar from '../../components/common/SearchBar';
 import GroupGrid from '../../components/groups/GroupGrid';
@@ -7,6 +6,10 @@ import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import { useGroups } from '../../hooks/useGroups';
+
+const LogoIcon = ({ className }) => (
+  <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
+);
 
 const GroupsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,7 +43,7 @@ const GroupsManagement = () => {
           </p>
         </div>
         <Link to="/admin/groups/new">
-          <Button icon={Plus}>
+          <Button icon={LogoIcon}>
             Créer un Groupe
           </Button>
         </Link>

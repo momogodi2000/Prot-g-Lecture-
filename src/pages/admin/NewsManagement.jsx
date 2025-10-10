@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Plus, Newspaper } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SearchBar from '../../components/common/SearchBar';
 import NewsCard from '../../components/news/NewsCard';
@@ -9,6 +8,10 @@ import Card from '../../components/common/Card';
 import Loader from '../../components/common/Loader';
 import { useNews } from '../../hooks/useEvents';
 import { paginate } from '../../utils/helpers';
+
+const LogoIcon = ({ className }) => (
+  <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
+);
 
 const NewsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,7 +48,7 @@ const NewsManagement = () => {
           </p>
         </div>
         <Link to="/admin/news/new">
-          <Button icon={Plus}>
+          <Button icon={LogoIcon}>
             Créer une Actualité
           </Button>
         </Link>
@@ -88,7 +91,7 @@ const NewsManagement = () => {
       ) : paginatedData.data.length === 0 ? (
         <Card>
           <div className="text-center py-12">
-            <Newspaper className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <LogoIcon className="h-16 w-16 mx-auto mb-4" />
             <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">
               Aucune actualité trouvée
             </p>
