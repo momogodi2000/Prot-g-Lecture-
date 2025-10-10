@@ -22,6 +22,10 @@ const BookForm = () => {
   const [authors, setAuthors] = useState([]);
   const [categories, setCategories] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
+  const [showNewAuthor, setShowNewAuthor] = useState(false);
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newAuthorName, setNewAuthorName] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
   
   const [formData, setFormData] = useState({
     titre: '',
@@ -95,6 +99,56 @@ const BookForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddAuthor = () => {
+    if (!newAuthorName.trim()) {
+      toast.error('Veuillez entrer le nom de l\'auteur');
+      return;
+    }
+
+    try {
+      db.run(
+        'INSERT INTO auteurs (nom_complet, date_ajout) VALUES (?, ?)',
+        [newAuthorName.trim(), new Date().toISOString()]
+      );
+      
+      const newId = db.queryOne('SELECT last_insert_rowid() as id')?.id;
+      
+      loadAuthorsAndCategories();
+      setFormData(prev => ({ ...prev, auteur_id: newId }));
+      setNewAuthorName('');
+      setShowNewAuthor(false);
+      toast.success('Auteur ajouté avec succès');
+    } catch (error) {
+      console.error('Error adding author:', error);
+      toast.error('Erreur lors de l\'ajout de l\'auteur');
+    }
+  };
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) {
+      toast.error('Veuillez entrer le nom de la catégorie');
+      return;
+    }
+
+    try {
+      db.run(
+        'INSERT INTO categories (nom, date_ajout) VALUES (?, ?)',
+        [newCategoryName.trim(), new Date().toISOString()]
+      );
+      
+      const newId = db.queryOne('SELECT last_insert_rowid() as id')?.id;
+      
+      loadAuthorsAndCategories();
+      setFormData(prev => ({ ...prev, categorie_id: newId }));
+      setNewCategoryName('');
+      setShowNewCategory(false);
+      toast.success('Catégorie ajoutée avec succès');
+    } catch (error) {
+      console.error('Error adding category:', error);
+      toast.error('Erreur lors de l\'ajout de la catégorie');
+    }
   };
 
   const handleImageChange = (e) => {
@@ -229,35 +283,113 @@ const BookForm = () => {
               icon={LogoIcon}
             />
 
-            <Select
-              label="Auteur"
-              name="auteur_id"
-              value={formData.auteur_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Sélectionner un auteur</option>
-              {authors.map(author => (
-                <option key={author.id} value={author.id}>
-                  {author.nom_complet}
-                </option>
-              ))}
-            </Select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Auteur <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-2">
+                <Select
+                  name="auteur_id"
+                  value={formData.auteur_id}
+                  onChange={handleChange}
+                  required
+                  className="flex-1"
+                >
+                  <option value="">Sélectionner un auteur</option>
+                  {authors.map(author => (
+                    <option key={author.id} value={author.id}>
+                      {author.nom_complet}
+                    </option>
+                  ))}
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewAuthor(!showNewAuthor)}
+                  icon={LogoIcon}
+                >
+                  +
+                </Button>
+              </div>
+              {showNewAuthor && (
+                <div className="mt-2 flex gap-2">
+                  <Input
+                    placeholder="Nom de l'auteur"
+                    value={newAuthorName}
+                    onChange={(e) => setNewAuthorName(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={handleAddAuthor} size="sm">
+                    Ajouter
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowNewAuthor(false);
+                      setNewAuthorName('');
+                    }}
+                    size="sm"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              )}
+            </div>
 
-            <Select
-              label="Catégorie"
-              name="categorie_id"
-              value={formData.categorie_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Sélectionner une catégorie</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.nom}
-                </option>
-              ))}
-            </Select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Catégorie <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-2">
+                <Select
+                  name="categorie_id"
+                  value={formData.categorie_id}
+                  onChange={handleChange}
+                  required
+                  className="flex-1"
+                >
+                  <option value="">Sélectionner une catégorie</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.nom}
+                    </option>
+                  ))}
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewCategory(!showNewCategory)}
+                  icon={LogoIcon}
+                >
+                  +
+                </Button>
+              </div>
+              {showNewCategory && (
+                <div className="mt-2 flex gap-2">
+                  <Input
+                    placeholder="Nom de la catégorie"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={handleAddCategory} size="sm">
+                    Ajouter
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowNewCategory(false);
+                      setNewCategoryName('');
+                    }}
+                    size="sm"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <Input
               label="ISBN"
@@ -325,12 +457,13 @@ const BookForm = () => {
             />
 
             <Input
-              label="Prix d'Achat (FCFA)"
+              label="Prix d'Achat (FCFA) - Optionnel"
               name="prix_achat"
               type="number"
               value={formData.prix_achat}
               onChange={handleChange}
               icon={LogoIcon}
+              placeholder="Prix optionnel"
             />
 
             <Select
