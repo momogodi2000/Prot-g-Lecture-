@@ -14,6 +14,7 @@ import Events from './pages/Events';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
+import InitAdmin from './pages/InitAdmin';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
@@ -65,6 +66,7 @@ function App() {
 
                 {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/init-admin" element={<InitAdmin />} />
 
                 {/* Admin Routes - Protected */}
                 <Route

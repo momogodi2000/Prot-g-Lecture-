@@ -42,6 +42,47 @@ function question(query) {
   });
 }
 
+async function initDatabase() {
+  try {
+    console.log('🔧 Initializing database...');
+    
+    const SQL = await initSqlJs();
+    let db;
+    
+    // Try to load existing database
+    if (existsSync(DB_PATH)) {
+      const filebuffer = readFileSync(DB_PATH);
+      db = new SQL.Database(filebuffer);
+      console.log('📂 Loaded existing database');
+    } else {
+      db = new SQL.Database();
+      
+      // Create schema
+      if (existsSync(SCHEMA_PATH)) {
+        const schema = readFileSync(SCHEMA_PATH, 'utf8');
+        db.exec(schema);
+        console.log('✅ Schema created');
+      }
+    }
+    
+    return db;
+  } catch (error) {
+    console.error('❌ Database initialization failed:', error);
+    throw error;
+  }
+}
+
+function saveDatabase(db) {
+  try {
+    const data = db.export();
+    const buffer = Buffer.from(data);
+    writeFileSync(DB_PATH, buffer);
+    console.log('💾 Database saved');
+  } catch (error) {
+    console.error('❌ Failed to save database:', error);
+  }
+}
+
 async function initSuperAdmin() {
   console.log('\n🔐 ===================================');
   console.log('   INITIALISATION SUPER ADMINISTRATEUR');
@@ -56,18 +97,23 @@ async function initSuperAdmin() {
     console.log('\n⏳ Création du compte administrateur...\n');
 
     // Initialize database
-    await databaseService.initialize();
+    const db = await initDatabase();
 
     // Create Firebase account
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUid = userCredential.user.uid;
 
     // Insert into SQLite
-    databaseService.run(
+    const stmt = db.prepare(
       `INSERT INTO administrateurs (firebase_uid, email, nom_complet, role, statut)
-       VALUES (?, ?, ?, ?, ?)`,
-      [firebaseUid, email, nomComplet, 'super_admin', 'actif']
+       VALUES (?, ?, ?, ?, ?)`
     );
+    stmt.run([firebaseUid, email, nomComplet, 'super_admin', 'actif']);
+    stmt.free();
+
+    // Save database
+    saveDatabase(db);
+    db.close();
 
     console.log('✅ =====================================');
     console.log('   SUPER ADMIN CRÉÉ AVEC SUCCÈS !');
