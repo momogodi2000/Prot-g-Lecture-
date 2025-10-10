@@ -4,6 +4,7 @@ import SearchBar from '../../components/common/SearchBar';
 import BookGrid from '../../components/books/BookGrid';
 import BookFilters from '../../components/books/BookFilters';
 import Button from '../../components/common/Button';
+import BulkImport from '../../components/admin/BulkImport';
 import { useBooks } from '../../hooks/useBooks';
 
 const LogoIcon = ({ className }) => (
@@ -14,8 +15,9 @@ const BooksManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({});
   const [viewMode, setViewMode] = useState('grid');
+  const [showBulkImport, setShowBulkImport] = useState(false);
   
-  const { books, loading } = useBooks({ ...filters, search: searchTerm });
+  const { books, loading, loadBooks } = useBooks({ ...filters, search: searchTerm });
 
   const handleClearFilters = () => {
     setFilters({});
@@ -34,11 +36,19 @@ const BooksManagement = () => {
             Gérez le catalogue de livres du centre
           </p>
         </div>
-        <Link to="/admin/books/new">
-          <Button icon={LogoIcon}>
-            Ajouter un Livre
+        <div className="flex space-x-3">
+          <Button
+            variant="secondary"
+            onClick={() => setShowBulkImport(true)}
+          >
+            📥 Importation en Masse
           </Button>
-        </Link>
+          <Link to="/admin/books/new">
+            <Button icon={LogoIcon}>
+              Ajouter un Livre
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -90,6 +100,15 @@ const BooksManagement = () => {
           <BookGrid books={books} loading={loading} isAdmin />
         </div>
       </div>
+
+      {/* Bulk Import Modal */}
+      <BulkImport
+        isOpen={showBulkImport}
+        onClose={() => setShowBulkImport(false)}
+        onSuccess={() => {
+          loadBooks();
+        }}
+      />
     </div>
   );
 };

@@ -1,9 +1,12 @@
-import { Calendar } from 'lucide-react';
 import EventCard from './EventCard';
 import Pagination from '../common/Pagination';
 import Loader from '../common/Loader';
 import { useState } from 'react';
 import { paginate } from '../../utils/helpers';
+
+const CalendarIcon = () => (
+  <span className="text-gray-400 text-6xl" role="img" aria-label="calendar">📅</span>
+);
 
 const EventGrid = ({ events, loading, isAdmin = false, itemsPerPage = 12 }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,7 +22,9 @@ const EventGrid = ({ events, loading, isAdmin = false, itemsPerPage = 12 }) => {
   if (!events || events.length === 0) {
     return (
       <div className="text-center py-12">
-        <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        <div className="mx-auto mb-4">
+          <CalendarIcon />
+        </div>
         <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">
           Aucun événement trouvé
         </p>
