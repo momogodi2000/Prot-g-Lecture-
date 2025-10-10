@@ -10,8 +10,7 @@ export const emailSchema = z.string()
 // Phone validator (Cameroon format) with sanitization
 export const phoneSchema = z.string()
   .transform(val => val.replace(/[\s-()]/g, ''))
-  .regex(
-    /^(\+237)?[26]\d{8}$/,
+  .refine(val => /^(\+237)?[26]\d{8}$/.test(val),
     'Numéro de téléphone invalide (format: +237XXXXXXXXX ou 6XXXXXXXX)'
   );
 

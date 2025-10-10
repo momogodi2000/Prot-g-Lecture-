@@ -43,18 +43,22 @@ self.addEventListener('fetch', (event) => {
         // Clone the response
         const responseClone = response.clone();
         
-        // Cache the fetched response
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+        // Cache the fetched response only for GET requests to http/https
+        if (event.request.method === 'GET' && event.request.url.startsWith('http')) {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
         
         return response;
       })
       .catch(() => {
-        // If network fails, try cache
-        return caches.match(event.request).then((response) => {
-          return response || caches.match('/offline.html');
-        });
+        // If network fails, try cache only for GET requests
+        if (event.request.method === 'GET') {
+          return caches.match(event.request).then((response) => {
+            return response || caches.match('/offline.html');
+          });
+        }
       })
   );
 });
