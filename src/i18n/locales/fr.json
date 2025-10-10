@@ -1,0 +1,109 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "nav": {
+    "home": "Accueil",
+    "books": "Catalogue",
+    "groups": "Groupes",
+    "events": "Événements",
+    "about": "À Propos",
+    "contact": "Contact",
+    "admin": "Administration"
+  },
+  "home": {
+    "title": "Bienvenue au Centre de Lecture Protégé QV",
+    "subtitle": "La lecture, un pont vers la connaissance et la communauté",
+    "cta": "Explorer le Catalogue",
+    "learnMore": "En Savoir Plus"
+  },
+  "books": {
+    "title": "Catalogue de Livres",
+    "subtitle": "Explorez notre collection",
+    "search": "Rechercher un livre...",
+    "filters": "Filtres",
+    "available": "Disponible",
+    "notAvailable": "Non disponible",
+    "reserve": "Réserver",
+    "details": "Voir les détails",
+    "noResults": "Aucun livre trouvé",
+    "resultsCount": "{{count}} livre(s) trouvé(s)"
+  },
+  "reservation": {
+    "title": "Réserver ce livre",
+    "form": {
+      "name": "Nom complet",
+      "email": "Email",
+      "phone": "Téléphone",
+      "date": "Date souhaitée",
+      "slot": "Créneau horaire",
+      "comment": "Commentaire",
+      "morning": "Matin (9h-13h)",
+      "afternoon": "Après-midi (14h-18h)"
+    },
+    "success": "Réservation créée avec succès !",
+    "error": "Erreur lors de la réservation"
+  },
+  "auth": {
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "email": "Email",
+    "password": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "rememberMe": "Se souvenir de moi",
+    "signIn": "Se connecter",
+    "adminArea": "Espace réservé aux administrateurs"
+  },
+  "admin": {
+    "dashboard": "Tableau de Bord",
+    "books": "Livres",
+    "reservations": "Réservations",
+    "groups": "Groupes",
+    "events": "Événements",
+    "news": "Actualités",
+    "messages": "Messages",
+    "newsletter": "Newsletter",
+    "statistics": "Statistiques",
+    "settings": "Paramètres"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Une question ? Une suggestion ?",
+    "form": {
+      "name": "Nom complet",
+      "email": "Email",
+      "phone": "Téléphone",
+      "subject": "Sujet",
+      "message": "Message",
+      "send": "Envoyer"
+    },
+    "success": "Message envoyé avec succès !",
+    "info": {
+      "address": "Adresse",
+      "phone": "Téléphone",
+      "email": "Email"
+    }
+  },
+  "footer": {
+    "description": "Centre de Lecture et Bibliothèque Communautaire de Protégé QV ONG",
+    "quickLinks": "Liens Rapides",
+    "newsletter": "Newsletter",
+    "newsletterText": "Restez informé de nos actualités",
+    "subscribe": "S'inscrire",
+    "copyright": "© {{year}} Protégé QV ONG. Tous droits réservés."
+  }
+}
+

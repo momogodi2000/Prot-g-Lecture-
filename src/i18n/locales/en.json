@@ -1,0 +1,109 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "home": "Home",
+    "books": "Catalog",
+    "groups": "Groups",
+    "events": "Events",
+    "about": "About",
+    "contact": "Contact",
+    "admin": "Administration"
+  },
+  "home": {
+    "title": "Welcome to Protégé QV Reading Center",
+    "subtitle": "Reading, a bridge to knowledge and community",
+    "cta": "Explore Catalog",
+    "learnMore": "Learn More"
+  },
+  "books": {
+    "title": "Book Catalog",
+    "subtitle": "Explore our collection",
+    "search": "Search for a book...",
+    "filters": "Filters",
+    "available": "Available",
+    "notAvailable": "Not available",
+    "reserve": "Reserve",
+    "details": "View details",
+    "noResults": "No books found",
+    "resultsCount": "{{count}} book(s) found"
+  },
+  "reservation": {
+    "title": "Reserve this book",
+    "form": {
+      "name": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "date": "Desired date",
+      "slot": "Time slot",
+      "comment": "Comment",
+      "morning": "Morning (9am-1pm)",
+      "afternoon": "Afternoon (2pm-6pm)"
+    },
+    "success": "Reservation created successfully!",
+    "error": "Error creating reservation"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "rememberMe": "Remember me",
+    "signIn": "Sign in",
+    "adminArea": "Reserved for administrators"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "books": "Books",
+    "reservations": "Reservations",
+    "groups": "Groups",
+    "events": "Events",
+    "news": "News",
+    "messages": "Messages",
+    "newsletter": "Newsletter",
+    "statistics": "Statistics",
+    "settings": "Settings"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "A question? A suggestion?",
+    "form": {
+      "name": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "subject": "Subject",
+      "message": "Message",
+      "send": "Send"
+    },
+    "success": "Message sent successfully!",
+    "info": {
+      "address": "Address",
+      "phone": "Phone",
+      "email": "Email"
+    }
+  },
+  "footer": {
+    "description": "Reading Center and Community Library of Protégé QV NGO",
+    "quickLinks": "Quick Links",
+    "newsletter": "Newsletter",
+    "newsletterText": "Stay informed about our news",
+    "subscribe": "Subscribe",
+    "copyright": "© {{year}} Protégé QV NGO. All rights reserved."
+  }
+}
+
