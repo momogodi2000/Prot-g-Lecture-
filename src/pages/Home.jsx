@@ -1,13 +1,16 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Users, Calendar, ArrowRight, MapPin, Clock, Heart, Award, Star } from 'lucide-react';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
+
+const LogoIcon = ({ className }) => (
+  <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
+);
 
 const Home = () => {
   const stats = [
     { icon: () => <img src="/assets/logo/logo.jpg" alt="Logo" className="h-12 w-12 rounded-full object-cover mx-auto" />, label: 'Livres Disponibles', value: '500+' },
-    { icon: Users, label: 'Membres Actifs', value: '200+' },
-    { icon: Calendar, label: 'Événements/Mois', value: '10+' },
+    { icon: LogoIcon, label: 'Membres Actifs', value: '200+' },
+    { icon: LogoIcon, label: 'Événements/Mois', value: '10+' },
   ];
 
   const testimonials = [
@@ -33,21 +36,21 @@ const Home = () => {
 
   const features = [
     {
-      icon: BookOpen,
+      icon: LogoIcon,
       title: "Catalogue Riche",
       description: "Plus de 500 livres dans tous les domaines : romans, éducation, sciences, et plus encore.",
       link: "/books",
       linkText: "Explorer"
     },
     {
-      icon: Users,
+      icon: LogoIcon,
       title: "Groupes de Lecture",
       description: "Rejoignez des communautés de lecteurs passionnés et participez à des discussions enrichissantes.",
       link: "/groups",
       linkText: "Découvrir"
     },
     {
-      icon: Calendar,
+      icon: LogoIcon,
       title: "Événements Culturels",
       description: "Ateliers, conférences, rencontres d'auteurs et bien plus pour enrichir votre expérience.",
       link: "/events",
@@ -57,22 +60,22 @@ const Home = () => {
 
   const highlights = [
     {
-      icon: MapPin,
+      icon: LogoIcon,
       title: "Localisation Idéale",
       description: "Situé au Rond-Point Express, Yaoundé, facilement accessible en transport public."
     },
     {
-      icon: Clock,
+      icon: LogoIcon,
       title: "Horaires Flexibles",
       description: "Ouvert du lundi au samedi, de 9h à 18h pour s'adapter à votre emploi du temps."
     },
     {
-      icon: Heart,
+      icon: LogoIcon,
       title: "Communauté Bienveillante",
       description: "Un environnement chaleureux où chaque visiteur se sent accueilli et valorisé."
     },
     {
-      icon: Award,
+      icon: LogoIcon,
       title: "Excellence Reconnue",
       description: "Centre de lecture primé pour son impact positif sur la communauté locale."
     }
@@ -94,7 +97,7 @@ const Home = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/books">
-                  <Button size="lg" icon={BookOpen}>
+                  <Button size="lg" icon={LogoIcon}>
                     Explorer le Catalogue
                   </Button>
                 </Link>
@@ -115,7 +118,7 @@ const Home = () => {
                 <div className="flex items-center space-x-2">
                   <div className="flex text-yellow-400">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-current" />
+                      <LogoIcon key={i} className="h-5 w-5" />
                     ))}
                   </div>
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -200,7 +203,7 @@ const Home = () => {
                 </p>
                 <Link to={feature.link} className="text-primary-500 hover:text-primary-600 font-medium inline-flex items-center">
                   {feature.linkText}
-                  <ArrowRight className="h-4 w-4 ml-1" />
+                  <LogoIcon className="h-4 w-4 ml-1" />
                 </Link>
               </Card>
             ))}
@@ -242,7 +245,7 @@ const Home = () => {
                 </blockquote>
                 <div className="flex text-yellow-400 mt-4">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
+                    <LogoIcon key={i} className="h-4 w-4" />
                   ))}
                 </div>
               </Card>

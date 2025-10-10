@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
 import toast from 'react-hot-toast';
+
+const LogoIcon = ({ className }) => (
+  <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
+);
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -30,7 +33,12 @@ const Login = () => {
       toast.success('Connexion réussie !');
       navigate('/admin/dashboard');
     } catch (error) {
-      toast.error(error.message || 'Erreur de connexion');
+      if (error.message === 'Compte administrateur introuvable') {
+        toast.error('Compte administrateur non initialisé. Redirection vers l\'initialisation...');
+        navigate('/init-admin');
+      } else {
+        toast.error(error.message || 'Erreur de connexion');
+      }
     } finally {
       setLoading(false);
     }
@@ -47,7 +55,7 @@ const Login = () => {
               to="/" 
               className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <img src="/assets/logo/logo.jpg" alt="Back" className="h-4 w-4 mr-2 rounded" />
               Retour à l'accueil
             </Link>
           </div>
@@ -71,7 +79,7 @@ const Login = () => {
               <Input
                 label="Email"
                 type="email"
-                icon={Mail}
+                icon={LogoIcon}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@protegeqv.org"
@@ -81,7 +89,7 @@ const Login = () => {
               <Input
                 label="Mot de passe"
                 type="password"
-                icon={Lock}
+                icon={LogoIcon}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -139,7 +147,7 @@ const Login = () => {
           <div className="space-y-4">
             <div className="flex items-center">
               <div className="bg-white/20 p-2 rounded-lg mr-4">
-                <Mail className="h-6 w-6" />
+                <LogoIcon className="h-6 w-6" />
               </div>
               <div>
                 <h4 className="font-semibold">Gestion des Contacts</h4>
@@ -148,7 +156,7 @@ const Login = () => {
             </div>
             <div className="flex items-center">
               <div className="bg-white/20 p-2 rounded-lg mr-4">
-                <Lock className="h-6 w-6" />
+                <LogoIcon className="h-6 w-6" />
               </div>
               <div>
                 <h4 className="font-semibold">Sécurité Renforcée</h4>
