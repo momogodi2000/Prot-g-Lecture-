@@ -5,7 +5,7 @@ import Card from '../components/common/Card';
 
 const Home = () => {
   const stats = [
-    { icon: BookOpen, label: 'Livres Disponibles', value: '500+' },
+    { icon: () => <img src="/assets/logo/logo.jpg" alt="Logo" className="h-12 w-12 rounded-full object-cover mx-auto" />, label: 'Livres Disponibles', value: '500+' },
     { icon: Users, label: 'Membres Actifs', value: '200+' },
     { icon: Calendar, label: 'Événements/Mois', value: '10+' },
   ];
