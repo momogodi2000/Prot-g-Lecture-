@@ -24,6 +24,7 @@ import GroupsManagement from './pages/admin/GroupsManagement';
 import GroupForm from './pages/admin/GroupForm';
 import ReservationsManagement from './pages/admin/ReservationsManagement';
 import EventsManagement from './pages/admin/EventsManagement';
+import EventForm from './pages/admin/EventForm';
 import NewsManagement from './pages/admin/NewsManagement';
 import NewsForm from './pages/admin/NewsForm';
 import ContactManagement from './pages/admin/ContactManagement';
@@ -91,6 +92,8 @@ function App() {
                   <Route path="groups/new" element={<GroupForm />} />
                   <Route path="groups/:id/edit" element={<GroupForm />} />
                   <Route path="events" element={<EventsManagement />} />
+                  <Route path="events/new" element={<EventForm />} />
+                  <Route path="events/:id/edit" element={<EventForm />} />
                   <Route path="news" element={<NewsManagement />} />
                   <Route path="news/new" element={<NewsForm />} />
                   <Route path="news/:id/edit" element={<NewsForm />} />

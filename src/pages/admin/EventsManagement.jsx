@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SearchBar from '../../components/common/SearchBar';
 import EventGrid from '../../components/events/EventGrid';
@@ -7,6 +6,10 @@ import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import { useEvents } from '../../hooks/useEvents';
+
+const LogoIcon = ({ className }) => (
+  <img src="/assets/logo/logo.jpg" alt="Logo" className={className} />
+);
 
 const EventsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,7 +43,7 @@ const EventsManagement = () => {
           </p>
         </div>
         <Link to="/admin/events/new">
-          <Button icon={Plus}>
+          <Button icon={LogoIcon}>
             Créer un Événement
           </Button>
         </Link>

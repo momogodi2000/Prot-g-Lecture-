@@ -1,25 +1,13 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import {
-  LayoutDashboard,
-  BookOpen,
-  Calendar,
-  Users,
-  Newspaper,
-  MessageSquare,
-  Mail,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Moon,
-  Sun,
-  BarChart3
-} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Button from '../common/Button';
 import toast from 'react-hot-toast';
+
+const LogoIcon = ({ className }) => (
+  <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
+);
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -28,16 +16,17 @@ const AdminLayout = () => {
   const navigate = useNavigate();
 
   const navigation = [
-    { name: 'Tableau de bord', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Livres', href: '/admin/books', icon: BookOpen },
-    { name: 'Réservations', href: '/admin/reservations', icon: Calendar },
-    { name: 'Groupes', href: '/admin/groups', icon: Users },
-    { name: 'Événements', href: '/admin/events', icon: Calendar },
-    { name: 'Actualités', href: '/admin/news', icon: Newspaper },
-    { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
-    { name: 'Newsletter', href: '/admin/newsletter', icon: Mail },
-    { name: 'Statistiques', href: '/admin/statistics', icon: BarChart3 },
-    { name: 'Paramètres', href: '/admin/settings', icon: Settings },
+    { name: 'Tableau de bord', href: '/admin/dashboard', icon: LogoIcon },
+    { name: 'Livres', href: '/admin/books', icon: LogoIcon },
+    { name: 'Réservations', href: '/admin/reservations', icon: LogoIcon },
+    { name: 'Groupes', href: '/admin/groups', icon: LogoIcon },
+    { name: 'Événements', href: '/admin/events', icon: LogoIcon },
+    { name: 'Actualités', href: '/admin/news', icon: LogoIcon },
+    { name: 'Messages', href: '/admin/messages', icon: LogoIcon },
+    { name: 'Newsletter', href: '/admin/newsletter', icon: LogoIcon },
+    { name: 'Statistiques', href: '/admin/statistics', icon: LogoIcon },
+    { name: 'Utilisateurs', href: '/admin/users', icon: LogoIcon },
+    { name: 'Paramètres', href: '/admin/settings', icon: LogoIcon },
   ];
 
   const handleLogout = async () => {
@@ -79,7 +68,7 @@ const AdminLayout = () => {
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              <X className="h-5 w-5" />
+              <span className="text-xl">✕</span>
             </button>
           </div>
 
@@ -119,7 +108,7 @@ const AdminLayout = () => {
               variant="danger"
               size="sm"
               fullWidth
-              icon={LogOut}
+              icon={LogoIcon}
               onClick={handleLogout}
             >
               Déconnexion
@@ -137,7 +126,7 @@ const AdminLayout = () => {
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 lg:hidden"
             >
-              <Menu className="h-6 w-6" />
+              <span className="text-2xl">☰</span>
             </button>
 
             <div className="flex items-center space-x-4 ml-auto">
@@ -146,9 +135,9 @@ const AdminLayout = () => {
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 {theme === 'light' ? (
-                  <Moon className="h-5 w-5" />
+                  <span className="text-xl">🌙</span>
                 ) : (
-                  <Sun className="h-5 w-5" />
+                  <span className="text-xl">☀️</span>
                 )}
               </button>
             </div>
