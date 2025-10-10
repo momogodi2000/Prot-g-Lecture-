@@ -3,6 +3,7 @@ import Select from '../common/Select';
 import Button from '../common/Button';
 import Card from '../common/Card';
 import { useCategories } from '../../hooks/useBooks';
+import { BOOK_STATUS_OPTIONS, LANGUAGE_OPTIONS } from '../../utils/constants';
 
 const BookFilters = ({ filters, onFilterChange, onClearFilters }) => {
   const { categories } = useCategories();
@@ -15,18 +16,12 @@ const BookFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
   const statusOptions = [
     { value: '', label: 'Tous les statuts' },
-    { value: 'disponible', label: 'Disponible' },
-    { value: 'reserve_complet', label: 'Complet' },
-    { value: 'maintenance', label: 'Maintenance' }
+    ...BOOK_STATUS_OPTIONS
   ];
 
   const langueOptions = [
     { value: '', label: 'Toutes les langues' },
-    { value: 'FR', label: 'Français' },
-    { value: 'EN', label: 'Anglais' },
-    { value: 'ES', label: 'Espagnol' },
-    { value: 'DE', label: 'Allemand' },
-    { value: 'AUTRE', label: 'Autre' }
+    ...LANGUAGE_OPTIONS
   ];
 
   return (

@@ -7,6 +7,7 @@ import Select from '../../components/common/Select';
 import Textarea from '../../components/common/Textarea';
 import Card from '../../components/common/Card';
 import toast from 'react-hot-toast';
+import { BOOK_STATUS_OPTIONS, LANGUAGE_OPTIONS } from '../../utils/constants';
 
 const LogoIcon = ({ className }) => (
   <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
@@ -421,14 +422,8 @@ const BookForm = () => {
               name="langue"
               value={formData.langue}
               onChange={handleChange}
-            >
-              <option value="">Sélectionner une langue</option>
-              <option value="FR">Français</option>
-              <option value="EN">Anglais</option>
-              <option value="ES">Espagnol</option>
-              <option value="DE">Allemand</option>
-              <option value="AUTRE">Autre</option>
-            </Select>
+              options={LANGUAGE_OPTIONS}
+            />
 
             <Input
               label="Nombre de Pages"
@@ -473,12 +468,8 @@ const BookForm = () => {
               name="statut"
               value={formData.statut}
               onChange={handleChange}
-            >
-              <option value="">Sélectionner un statut</option>
-              <option value="disponible">Disponible</option>
-              <option value="reserve_complet">Complet</option>
-              <option value="maintenance">Maintenance</option>
-            </Select>
+              options={BOOK_STATUS_OPTIONS}
+            />
           </div>
 
           <Textarea

@@ -11,6 +11,13 @@ export const BOOK_STATUS = {
   MAINTENANCE: 'maintenance'
 };
 
+// Book Status Options for dropdowns
+export const BOOK_STATUS_OPTIONS = [
+  { value: 'disponible', label: 'Disponible' },
+  { value: 'reserve_complet', label: 'Complet' },
+  { value: 'maintenance', label: 'Maintenance' }
+];
+
 // Reservation Status
 export const RESERVATION_STATUS = {
   PENDING: 'en_attente',
@@ -34,9 +41,21 @@ export const USER_ROLES = {
 
 // Languages
 export const LANGUAGES = {
-  FR: 'fr',
-  EN: 'en'
+  FR: 'FR',
+  EN: 'EN',
+  ES: 'ES',
+  DE: 'DE',
+  OTHER: 'AUTRE'
 };
+
+// Language Options for dropdowns
+export const LANGUAGE_OPTIONS = [
+  { value: 'FR', label: 'Français' },
+  { value: 'EN', label: 'Anglais' },
+  { value: 'ES', label: 'Espagnol' },
+  { value: 'DE', label: 'Allemand' },
+  { value: 'AUTRE', label: 'Autre' }
+];
 
 // Admin Status
 export const ADMIN_STATUS = {
