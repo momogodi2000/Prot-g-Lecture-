@@ -1,9 +1,35 @@
 #!/usr/bin/env node
 
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../src/services/firebase.js';
-import databaseService from '../src/services/database.js';
+import { initializeApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import initSqlJs from 'sql.js';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import readline from 'readline';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Firebase configuration for Node.js (using fallback values)
+const firebaseConfig = {
+  apiKey: "AIzaSyAKaCsfH8HnRxhBA1D9XZwqFtc4RzS2_-Q",
+  authDomain: "protegeqv-2532f.firebaseapp.com",
+  projectId: "protegeqv-2532f",
+  storageBucket: "protegeqv-2532f.firebasestorage.app",
+  messagingSenderId: "553100729963",
+  appId: "1:553100729963:web:1f4fba71360fe864be1b2e",
+  measurementId: "G-N3NB5PWT1M"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Database path
+const DB_PATH = join(__dirname, '..', 'database.sqlite');
+const SCHEMA_PATH = join(__dirname, '..', 'public', 'schema.sql');
 
 const rl = readline.createInterface({
   input: process.stdin,

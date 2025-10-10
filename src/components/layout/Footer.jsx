@@ -1,8 +1,28 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, MapPin, Phone } from 'lucide-react';
+import { useState } from 'react';
+import { useNewsletter } from '../../hooks/useNewsletter';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const { subscribe } = useNewsletter();
+
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    try {
+      setIsSubscribing(true);
+      await subscribe(email);
+      setEmail('');
+    } catch (error) {
+      // Error handled by useNewsletter hook
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   return (
     <footer className="bg-white dark:bg-dark-surface border-t border-gray-200 dark:border-gray-700">
@@ -11,7 +31,11 @@ const Footer = () => {
           {/* About */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <BookOpen className="h-8 w-8 text-primary-500" />
+              <img 
+                src="/assets/logo/logo.jpg" 
+                alt="Protégé QV Logo" 
+                className="h-10 w-10 rounded-full object-cover"
+              />
               <span className="text-xl font-bold text-gray-900 dark:text-white">
                 Protégé Lecture+
               </span>
@@ -78,12 +102,28 @@ const Footer = () => {
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
               Restez informé de nos actualités et événements.
             </p>
-            <Link
-              to="/newsletter"
-              className="inline-block px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              S'inscrire
-            </Link>
+            <form onSubmit={handleNewsletterSubmit} className="space-y-3">
+              <div>
+                <input
+                  type="email"
+                  placeholder="Votre adresse email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm 
+                           bg-white dark:bg-dark-surface text-gray-900 dark:text-white
+                           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubscribing}
+                className="w-full px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 
+                         text-white text-sm font-medium rounded-md transition-colors"
+              >
+                {isSubscribing ? 'Inscription...' : 'S\'inscrire'}
+              </button>
+            </form>
           </div>
         </div>
 

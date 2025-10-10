@@ -83,7 +83,8 @@ export const isValidEmail = (email) => {
  * @returns {boolean}
  */
 export const isValidPhone = (phone) => {
-  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+  // Minimum 8 digits, maximum 15 digits (E.164 standard)
+  const phoneRegex = /^\+?[1-9]\d{7,14}$/;
   return phoneRegex.test(phone.replace(/[\s-()]/g, ''));
 };
 

@@ -4,7 +4,7 @@ import { sanitizeInput } from './security';
 // Email validator with sanitization
 export const emailSchema = z.string()
   .email('Adresse email invalide')
-  .transform(val => sanitizeInput(val).toLowerCase().trim())
+  .transform(val => sanitizeInput(val.trim()).toLowerCase())
   .refine(val => val.length <= 254, 'Email trop long');
 
 // Phone validator (Cameroon format) with sanitization

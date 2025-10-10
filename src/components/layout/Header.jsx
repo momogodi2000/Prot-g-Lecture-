@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Menu, X, Moon, Sun, BookOpen } from 'lucide-react';
+import { Menu, X, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,7 +27,11 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary-500" />
+              <img 
+                src="/assets/logo/logo.jpg" 
+                alt="Protégé QV Logo" 
+                className="h-10 w-10 rounded-full object-cover"
+              />
               <span className="text-xl font-bold text-gray-900 dark:text-white">
                 Protégé Lecture+
               </span>

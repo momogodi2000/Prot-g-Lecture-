@@ -66,7 +66,11 @@ const AdminLayout = () => {
           {/* Header */}
           <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
             <Link to="/" className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary-500" />
+              <img 
+                src="/assets/logo/logo.jpg" 
+                alt="Protégé QV Logo" 
+                className="h-8 w-8 rounded-full object-cover"
+              />
               <span className="text-lg font-bold text-gray-900 dark:text-white">
                 Admin
               </span>
