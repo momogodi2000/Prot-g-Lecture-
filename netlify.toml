@@ -10,6 +10,7 @@
   # Ensure devDependencies (like Vite) are installed during npm ci
   NPM_FLAGS = "--legacy-peer-deps --include=dev"
   npm_config_production = "false"
+  ROLLUP_DISABLE_NATIVE = "1"
 
 # Production context: all deploys from the main branch
 [context.production]
