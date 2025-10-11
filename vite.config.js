@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
-import { compression } from 'vite-plugin-compression2'
+import { compression } from './scripts/compression-plugin.js'
 
 // https://vite.dev/config/
 export default defineConfig({
