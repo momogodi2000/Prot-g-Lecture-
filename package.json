@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+  "prebuild": "node scripts/install-rollup-native.js",
     "init:admin": "node scripts/init-admin.js",
     "init:db": "node scripts/init-db.js",
     "sitemap": "node scripts/generate-sitemap.js"

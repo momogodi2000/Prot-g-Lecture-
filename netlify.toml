@@ -7,10 +7,10 @@
 
 [build.environment]
   NODE_VERSION = "20.19.0"
-  # Ensure devDependencies (like Vite) are installed during npm ci
-  NPM_FLAGS = "--legacy-peer-deps --include=dev"
+  # Ensure devDependencies and optional native binaries install during npm ci
+  NPM_FLAGS = "--legacy-peer-deps --include=dev --include=optional"
   npm_config_production = "false"
-  ROLLUP_DISABLE_NATIVE = "1"
+  npm_config_optional = "true"
 
 # Production context: all deploys from the main branch
 [context.production]
