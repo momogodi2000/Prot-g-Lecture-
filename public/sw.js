@@ -1,8 +1,14 @@
-const CACHE_NAME = 'protege-lecture-v1.0.0';
+const CACHE_NAME = 'protege-lecture-v1.1.0';
+const RUNTIME_CACHE = 'protege-runtime-v1.1.0';
+const IMAGE_CACHE = 'protege-images-v1.1.0';
+
 const STATIC_CACHE = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/offline.html',
+  '/icon-192x192.png',
+  '/icon-512x512.png'
 ];
 
 // Install Service Worker
@@ -20,11 +26,12 @@ self.addEventListener('install', (event) => {
 // Activate Service Worker
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activating...');
+  const currentCaches = [CACHE_NAME, RUNTIME_CACHE, IMAGE_CACHE];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
+          if (!currentCaches.includes(cache)) {
             console.log('[Service Worker] Deleting old cache:', cache);
             return caches.delete(cache);
           }
@@ -35,33 +42,131 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Strategy: Network First, then Cache
+// Advanced Fetch Strategy
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clone the response
-        const responseClone = response.clone();
-        
-        // Cache the fetched response only for GET requests to http/https
-        if (event.request.method === 'GET' && event.request.url.startsWith('http')) {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        
-        return response;
-      })
-      .catch(() => {
-        // If network fails, try cache only for GET requests
-        if (event.request.method === 'GET') {
-          return caches.match(event.request).then((response) => {
-            return response || caches.match('/offline.html');
-          });
-        }
-      })
-  );
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Skip non-GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+  
+  // Skip cross-origin requests (except for fonts and images)
+  if (url.origin !== location.origin && 
+      !request.url.includes('fonts') && 
+      !request.url.includes('images')) {
+    return;
+  }
+  
+  // Handle different types of requests with appropriate strategies
+  
+  // 1. Static assets (CSS, JS) - Cache First
+  if (request.url.includes('/assets/')) {
+    event.respondWith(cacheFirst(request, CACHE_NAME));
+    return;
+  }
+  
+  // 2. Images - Cache First with fallback
+  if (request.destination === 'image' || 
+      /\.(png|jpg|jpeg|svg|gif|webp|ico)$/i.test(url.pathname)) {
+    event.respondWith(cacheFirst(request, IMAGE_CACHE));
+    return;
+  }
+  
+  // 3. API calls and dynamic content - Network First
+  if (url.pathname.includes('/api/') || 
+      url.pathname.includes('/firebase') ||
+      url.pathname.includes('.json')) {
+    event.respondWith(networkFirst(request, RUNTIME_CACHE));
+    return;
+  }
+  
+  // 4. HTML pages - Network First with offline fallback
+  if (request.destination === 'document' || 
+      request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(networkFirstWithOffline(request, RUNTIME_CACHE));
+    return;
+  }
+  
+  // 5. Default - Network First
+  event.respondWith(networkFirst(request, RUNTIME_CACHE));
 });
+
+// Cache First Strategy - for static assets
+async function cacheFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  
+  if (cached) {
+    return cached;
+  }
+  
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.log('[Service Worker] Fetch failed for:', request.url);
+    // Return a fallback if available
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+// Network First Strategy - for dynamic content
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      // Clone and cache successful responses
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    // If network fails, try cache
+    const cached = await cache.match(request);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
+}
+
+// Network First with Offline Page - for HTML
+async function networkFirstWithOffline(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    // Try cache first
+    const cached = await cache.match(request);
+    if (cached) {
+      return cached;
+    }
+    
+    // Return offline page as last resort
+    const offlinePage = await cache.match('/offline.html');
+    if (offlinePage) {
+      return offlinePage;
+    }
+    
+    // Fallback response
+    return new Response('Offline - No cached content available', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: new Headers({ 'Content-Type': 'text/plain' })
+    });
+  }
+}
 
 // Handle push notifications
 self.addEventListener('push', (event) => {
@@ -97,7 +202,7 @@ self.addEventListener('notificationclick', (event) => {
     const urlToOpen = event.notification.data.url || '/';
     
     event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true })
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true })
         .then((clientList) => {
           // Check if there's already a window open
           for (const client of clientList) {
@@ -106,8 +211,8 @@ self.addEventListener('notificationclick', (event) => {
             }
           }
           // Open new window
-          if (clients.openWindow) {
-            return clients.openWindow(urlToOpen);
+          if (self.clients.openWindow) {
+            return self.clients.openWindow(urlToOpen);
           }
         })
     );

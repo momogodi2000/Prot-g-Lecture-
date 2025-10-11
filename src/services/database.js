@@ -13,9 +13,18 @@ class DatabaseService {
     try {
       console.log('🔧 Initializing SQL.js...');
       
-      // Initialize SQL.js with CDN
+      // Initialize SQL.js with local WASM file (bundled with sql.js package)
+      // This fixes the Netlify WASM loading issue
       this.SQL = await initSqlJs({
-        locateFile: file => `https://sql.js.org/dist/${file}`
+        locateFile: file => {
+          // In production, Vite bundles the WASM file
+          // For development, use the node_modules path
+          if (import.meta.env.DEV) {
+            return `node_modules/sql.js/dist/${file}`;
+          }
+          // In production, the WASM file will be in the assets folder
+          return `/assets/wasm/${file}`;
+        }
       });
 
       // Try to load existing database from IndexedDB

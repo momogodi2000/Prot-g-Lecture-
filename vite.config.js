@@ -2,20 +2,45 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { compression } from './scripts/compression-plugin.js'
+import { copyFileSync, mkdirSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// Plugin to copy sql.js WASM file to build output
+function copySqlJsWasm() {
+  return {
+    name: 'copy-sqljs-wasm',
+    writeBundle() {
+      const wasmSrc = join(__dirname, 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm')
+      const wasmDest = join(__dirname, 'dist', 'assets', 'wasm', 'sql-wasm.wasm')
+      
+      try {
+        mkdirSync(dirname(wasmDest), { recursive: true })
+        copyFileSync(wasmSrc, wasmDest)
+        console.log('✅ Copied sql-wasm.wasm to dist/assets/wasm/')
+      } catch (error) {
+        console.error('❌ Error copying WASM file:', error)
+      }
+    }
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    copySqlJsWasm(),
     // Gzip compression
     compression({
       algorithm: 'gzip',
-      exclude: [/\.(br)$/, /\.(gz)$/],
+      exclude: [/\.(br)$/, /\.(gz)$/, /\.(wasm)$/],
     }),
     // Brotli compression
     compression({
       algorithm: 'brotliCompress',
-      exclude: [/\.(br)$/, /\.(gz)$/],
+      exclude: [/\.(br)$/, /\.(gz)$/, /\.(wasm)$/],
     }),
     // Bundle analyzer (only in build mode)
     process.env.ANALYZE && visualizer({
@@ -45,6 +70,12 @@ export default defineConfig({
       'X-Frame-Options': 'DENY',
       'X-XSS-Protection': '1; mode=block',
     },
+  },
+  
+  // Worker configuration for WASM support
+  worker: {
+    format: 'es',
+    plugins: [],
   },
   
   build: {
@@ -80,6 +111,9 @@ export default defineConfig({
             return `assets/images/[name]-[hash][extname]`;
           } else if (/woff2?|eot|ttf|otf/i.test(ext)) {
             return `assets/fonts/[name]-[hash][extname]`;
+          } else if (/wasm/i.test(ext)) {
+            // WASM files should keep their names for proper loading
+            return `assets/wasm/[name][extname]`;
           }
           return `assets/[ext]/[name]-[hash][extname]`;
         },
@@ -93,6 +127,8 @@ export default defineConfig({
     assetsInlineLimit: 10240,
     // Improve tree-shaking
     reportCompressedSize: true,
+    // Target modern browsers for better optimization
+    target: 'es2015',
   },
   
   // Optimize dependencies
