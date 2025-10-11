@@ -7,14 +7,13 @@
 
 [build.environment]
   NODE_VERSION = "22.12.0"
-  NPM_FLAGS = "--legacy-peer-deps"
+  # Ensure devDependencies (like Vite) are installed during npm ci
+  NPM_FLAGS = "--legacy-peer-deps --include=dev"
+  npm_config_production = "false"
 
 # Production context: all deploys from the main branch
 [context.production]
   command = "npm ci && npm run build"
-  
-[context.production.environment]
-  NODE_ENV = "production"
 
 # Deploy Preview context: all deploys from pull requests
 [context.deploy-preview]
