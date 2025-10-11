@@ -6,7 +6,7 @@
   command = "npm ci && npm run build"
 
 [build.environment]
-  NODE_VERSION = "22.12.0"
+  NODE_VERSION = "20.19.0"
   # Ensure devDependencies (like Vite) are installed during npm ci
   NPM_FLAGS = "--legacy-peer-deps --include=dev"
   npm_config_production = "false"

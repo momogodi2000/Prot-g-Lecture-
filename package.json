@@ -5,6 +5,9 @@
   "type": "module",
   "description": "Plateforme de Réservation du Centre de Lecture - Protégé QV ONG",
   "author": "Protégé QV ONG",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "npm exec vite build",
