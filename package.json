@@ -7,7 +7,7 @@
   "author": "Protégé QV ONG",
   "scripts": {
     "dev": "vite",
-    "build": "npx --no-install vite build",
+    "build": "npm exec vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives",
     "test": "vitest run",
