@@ -3,11 +3,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-async function runMigrations() {
+function runMigrations() {
   try {
     console.log('🚀 Starting database migration...');
     
-    const db = await initializeDatabase();
+    const db = initializeDatabase();
     
     console.log('✅ Database migration completed successfully');
     console.log('📊 Database tables and indexes created');

@@ -130,7 +130,7 @@ router.get('/', authenticateToken, [
 router.post('/', [
   body('livre_id').isInt({ min: 1 }).withMessage('L\'ID du livre est requis'),
   body('nom_visiteur').isLength({ min: 2 }).withMessage('Le nom du visiteur est requis'),
-  body('email_visiteur').isEmail().normalizeEmail().withMessage('Email valide requis'),
+  body('email_visiteur').isEmail().withMessage('Email valide requis'),
   body('telephone_visiteur').isLength({ min: 8 }).withMessage('Numéro de téléphone requis'),
   body('date_souhaitee').isISO8601().withMessage('Date souhaitée requise'),
   body('creneau').isIn(['matin', 'apres_midi']).withMessage('Créneau invalide'),
@@ -138,6 +138,7 @@ router.post('/', [
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.error('Reservation validation errors:', errors.array());
     return res.status(400).json({
       error: 'Données de validation invalides',
       details: errors.array(),
@@ -149,6 +150,8 @@ router.post('/', [
     livre_id, nom_visiteur, email_visiteur, telephone_visiteur,
     date_souhaitee, creneau, commentaire
   } = req.body;
+
+  console.log('Reservation request:', req.body);
 
   const db = getDatabase();
 
