@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useDatabase } from '../../contexts/DatabaseContext';
+import apiService from '../../services/api';
 import { formatRelativeTime } from '../../utils/formatters';
 import Card from '../common/Card';
 import Badge from '../common/Badge';
@@ -13,28 +13,23 @@ import {
 } from 'lucide-react';
 
 const ActivityFeed = ({ limit = 10 }) => {
-  const { db } = useDatabase();
   const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadActivities();
-  }, []);
+  }, [limit]);
 
-  const loadActivities = () => {
+  const loadActivities = async () => {
     try {
-      const query = `
-        SELECT 
-          l.*,
-          a.nom_complet as utilisateur_nom
-        FROM logs_activite l
-        LEFT JOIN administrateurs a ON l.utilisateur_id = a.id
-        ORDER BY l.date_action DESC
-        LIMIT ?
-      `;
-      const results = db.query(query, [limit]);
-      setActivities(results || []);
+      setLoading(true);
+      const response = await apiService.getActivityLog({ limit });
+      setActivities(response.logs || []);
     } catch (error) {
       console.error('Error loading activities:', error);
+      setActivities([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,7 +62,11 @@ const ActivityFeed = ({ limit = 10 }) => {
       </Card.Header>
       
       <Card.Content>
-        {activities.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <p>Chargement...</p>
+          </div>
+        ) : activities.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <p>Aucune activité récente</p>
           </div>

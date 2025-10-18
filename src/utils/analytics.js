@@ -1,13 +1,12 @@
-import { analytics } from '../services/firebase';
-import { logEvent, setUserProperties, setUserId } from 'firebase/analytics';
+import apiService from '../services/api';
 
 /**
  * Analytics Utility Functions
- * Wrapper for Firebase Analytics with type safety and easy tracking
+ * Simple analytics tracking that sends events to backend API
  */
 
 const isAnalyticsEnabled = () => {
-  return analytics && import.meta.env.VITE_ENABLE_ANALYTICS === 'true';
+  return import.meta.env.VITE_ENABLE_ANALYTICS === 'true';
 };
 
 /**
@@ -19,11 +18,23 @@ export const trackPageView = (pagePath, pageTitle) => {
   if (!isAnalyticsEnabled()) return;
 
   try {
-    logEvent(analytics, 'page_view', {
-      page_path: pagePath,
-      page_title: pageTitle,
-      page_location: window.location.href,
-    });
+    // Send to backend API for tracking
+    const eventData = {
+      event_type: 'page_view',
+      event_data: {
+        page_path: pagePath,
+        page_title: pageTitle,
+        page_location: window.location.href,
+        timestamp: new Date().toISOString()
+      }
+    };
+    
+    // Send asynchronously without blocking
+    fetch(`${apiService.baseURL.replace('/api', '')}/analytics/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(eventData)
+    }).catch(error => console.error('Analytics tracking error:', error));
   } catch (error) {
     console.error('Analytics tracking error:', error);
   }
@@ -38,10 +49,20 @@ export const trackEvent = (eventName, eventParams = {}) => {
   if (!isAnalyticsEnabled()) return;
 
   try {
-    logEvent(analytics, eventName, {
-      timestamp: new Date().toISOString(),
-      ...eventParams,
-    });
+    const eventData = {
+      event_type: eventName,
+      event_data: {
+        timestamp: new Date().toISOString(),
+        ...eventParams,
+      }
+    };
+    
+    // Send asynchronously without blocking
+    fetch(`${apiService.baseURL.replace('/api', '')}/analytics/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(eventData)
+    }).catch(error => console.error('Analytics tracking error:', error));
   } catch (error) {
     console.error('Analytics tracking error:', error);
   }
@@ -203,7 +224,11 @@ export const setAnalyticsUserId = (userId) => {
   if (!isAnalyticsEnabled()) return;
 
   try {
-    setUserId(analytics, userId);
+    // Store user ID for future analytics calls
+    localStorage.setItem('analytics_user_id', userId);
+    
+    // Send user identification event
+    trackEvent('user_identification', { user_id: userId });
   } catch (error) {
     console.error('Analytics setUserId error:', error);
   }
@@ -217,7 +242,11 @@ export const setAnalyticsUserProperties = (properties) => {
   if (!isAnalyticsEnabled()) return;
 
   try {
-    setUserProperties(analytics, properties);
+    // Store user properties for future analytics calls
+    localStorage.setItem('analytics_user_properties', JSON.stringify(properties));
+    
+    // Send user properties update event
+    trackEvent('user_properties_update', properties);
   } catch (error) {
     console.error('Analytics setUserProperties error:', error);
   }

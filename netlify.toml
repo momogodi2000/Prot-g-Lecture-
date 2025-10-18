@@ -4,6 +4,8 @@
 [build]
   publish = "dist"
   command = "npm ci && npm run build"
+  # Note: For full-stack deployment, use Render.com instead
+  # This config is kept for frontend-only deployment if needed
 
 [build.environment]
   NODE_VERSION = "20.19.0"

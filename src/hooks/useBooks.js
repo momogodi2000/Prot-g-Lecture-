@@ -1,68 +1,37 @@
 import { useState, useEffect } from 'react';
-import { useDatabase } from '../contexts/DatabaseContext';
 import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
 import toast from 'react-hot-toast';
 
 export const useBooks = (filters = {}) => {
-  const { db } = useDatabase();
   const { currentAdmin } = useAuth();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState(null);
 
   useEffect(() => {
     loadBooks();
   }, [JSON.stringify(filters)]);
 
-  const loadBooks = () => {
+  const loadBooks = async () => {
     try {
       setLoading(true);
-      let query = `
-        SELECT 
-          l.*,
-          a.nom_complet as auteur_nom,
-          c.nom as categorie_nom,
-          c.couleur_hex as categorie_couleur
-        FROM livres l
-        LEFT JOIN auteurs a ON l.auteur_id = a.id
-        LEFT JOIN categories c ON l.categorie_id = c.id
-        WHERE 1=1
-      `;
-      
-      const params = [];
-
-      // Apply filters
-      if (filters.search) {
-        query += ` AND (l.titre LIKE ? OR l.isbn LIKE ? OR a.nom_complet LIKE ?)`;
-        const searchTerm = `%${filters.search}%`;
-        params.push(searchTerm, searchTerm, searchTerm);
-      }
-
-      if (filters.categorie_id) {
-        query += ` AND l.categorie_id = ?`;
-        params.push(filters.categorie_id);
-      }
-
-      if (filters.auteur_id) {
-        query += ` AND l.auteur_id = ?`;
-        params.push(filters.auteur_id);
-      }
-
-      if (filters.statut) {
-        query += ` AND l.statut = ?`;
-        params.push(filters.statut);
-      }
-
-      if (filters.langue) {
-        query += ` AND l.langue = ?`;
-        params.push(filters.langue);
-      }
-
-      query += ` ORDER BY l.date_ajout DESC`;
-
-      const results = db.query(query, params);
-      setBooks(results || []);
       setError(null);
+
+      // Build query parameters
+      const params = {};
+      if (filters.search) params.search = filters.search;
+      if (filters.categorie_id) params.categorie_id = filters.categorie_id;
+      if (filters.auteur_id) params.auteur_id = filters.auteur_id;
+      if (filters.statut) params.statut = filters.statut;
+      if (filters.langue) params.langue = filters.langue;
+      if (filters.limit) params.limit = filters.limit;
+      if (filters.offset) params.offset = filters.offset;
+
+      const response = await apiService.getBooks(params);
+      setBooks(response.books || []);
+      setPagination(response.pagination || null);
     } catch (err) {
       console.error('Error loading books:', err);
       setError(err.message);
@@ -72,61 +41,22 @@ export const useBooks = (filters = {}) => {
     }
   };
 
-  const getBook = (id) => {
+  const getBook = async (id) => {
     try {
-      const query = `
-        SELECT 
-          l.*,
-          a.nom_complet as auteur_nom,
-          a.biographie as auteur_biographie,
-          c.nom as categorie_nom,
-          c.couleur_hex as categorie_couleur
-        FROM livres l
-        LEFT JOIN auteurs a ON l.auteur_id = a.id
-        LEFT JOIN categories c ON l.categorie_id = c.id
-        WHERE l.id = ?
-      `;
-      return db.queryOne(query, [id]);
+      const response = await apiService.getBook(id);
+      return response.book;
     } catch (err) {
       console.error('Error getting book:', err);
       throw err;
     }
   };
 
-  const createBook = (bookData) => {
+  const createBook = async (bookData) => {
     try {
-      const query = `
-        INSERT INTO livres (
-          isbn, titre, auteur_id, resume, categorie_id, 
-          annee_publication, editeur, langue, nombre_pages,
-          nombre_exemplaires, exemplaires_disponibles, statut,
-          image_couverture, tags, cote, ajoute_par
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-      
-      db.run(query, [
-        bookData.isbn || null,
-        bookData.titre,
-        bookData.auteur_id,
-        bookData.resume,
-        bookData.categorie_id,
-        bookData.annee_publication,
-        bookData.editeur || null,
-        bookData.langue,
-        bookData.nombre_pages || null,
-        bookData.nombre_exemplaires,
-        bookData.exemplaires_disponibles || bookData.nombre_exemplaires,
-        bookData.statut || 'disponible',
-        bookData.image_couverture || null,
-        bookData.tags || null,
-        bookData.cote || null,
-        currentAdmin?.id
-      ]);
-
-      const id = db.getLastInsertId();
+      const response = await apiService.createBook(bookData);
       toast.success('Livre ajouté avec succès');
       loadBooks();
-      return id;
+      return response.bookId;
     } catch (err) {
       console.error('Error creating book:', err);
       toast.error('Erreur lors de l\'ajout du livre');
@@ -134,37 +64,9 @@ export const useBooks = (filters = {}) => {
     }
   };
 
-  const updateBook = (id, bookData) => {
+  const updateBook = async (id, bookData) => {
     try {
-      const query = `
-        UPDATE livres SET
-          isbn = ?, titre = ?, auteur_id = ?, resume = ?, 
-          categorie_id = ?, annee_publication = ?, editeur = ?,
-          langue = ?, nombre_pages = ?, nombre_exemplaires = ?,
-          exemplaires_disponibles = ?, statut = ?, image_couverture = ?,
-          tags = ?, cote = ?
-        WHERE id = ?
-      `;
-      
-      db.run(query, [
-        bookData.isbn || null,
-        bookData.titre,
-        bookData.auteur_id,
-        bookData.resume,
-        bookData.categorie_id,
-        bookData.annee_publication,
-        bookData.editeur || null,
-        bookData.langue,
-        bookData.nombre_pages || null,
-        bookData.nombre_exemplaires,
-        bookData.exemplaires_disponibles,
-        bookData.statut,
-        bookData.image_couverture || null,
-        bookData.tags || null,
-        bookData.cote || null,
-        id
-      ]);
-
+      await apiService.updateBook(id, bookData);
       toast.success('Livre mis à jour avec succès');
       loadBooks();
     } catch (err) {
@@ -174,9 +76,9 @@ export const useBooks = (filters = {}) => {
     }
   };
 
-  const deleteBook = (id) => {
+  const deleteBook = async (id) => {
     try {
-      db.run('DELETE FROM livres WHERE id = ?', [id]);
+      await apiService.deleteBook(id);
       toast.success('Livre supprimé avec succès');
       loadBooks();
     } catch (err) {
@@ -190,6 +92,7 @@ export const useBooks = (filters = {}) => {
     books,
     loading,
     error,
+    pagination,
     loadBooks,
     getBook,
     createBook,
@@ -199,70 +102,50 @@ export const useBooks = (filters = {}) => {
 };
 
 export const useAuthors = () => {
-  const { db } = useDatabase();
   const [authors, setAuthors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadAuthors();
   }, []);
 
-  const loadAuthors = () => {
+  const loadAuthors = async () => {
     try {
-      const results = db.query('SELECT * FROM auteurs ORDER BY nom_complet');
-      setAuthors(results || []);
+      setLoading(true);
+      const response = await apiService.getAuthors();
+      setAuthors(response.authors || []);
     } catch (err) {
       console.error('Error loading authors:', err);
+      setAuthors([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const createAuthor = (authorData) => {
-    try {
-      db.run(
-        'INSERT INTO auteurs (nom_complet, biographie, nationalite, date_naissance, site_web) VALUES (?, ?, ?, ?, ?)',
-        [authorData.nom_complet, authorData.biographie, authorData.nationalite, authorData.date_naissance, authorData.site_web]
-      );
-      loadAuthors();
-      return db.getLastInsertId();
-    } catch (err) {
-      console.error('Error creating author:', err);
-      throw err;
-    }
-  };
-
-  return { authors, loadAuthors, createAuthor };
+  return { authors, loading, loadAuthors };
 };
 
 export const useCategories = () => {
-  const { db } = useDatabase();
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadCategories();
   }, []);
 
-  const loadCategories = () => {
+  const loadCategories = async () => {
     try {
-      const results = db.query('SELECT * FROM categories ORDER BY ordre_affichage, nom');
-      setCategories(results || []);
+      setLoading(true);
+      const response = await apiService.getCategories();
+      setCategories(response.categories || []);
     } catch (err) {
       console.error('Error loading categories:', err);
+      setCategories([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const createCategory = (categoryData) => {
-    try {
-      db.run(
-        'INSERT INTO categories (nom, description, couleur_hex, icone, parent_id) VALUES (?, ?, ?, ?, ?)',
-        [categoryData.nom, categoryData.description, categoryData.couleur_hex, categoryData.icone, categoryData.parent_id]
-      );
-      loadCategories();
-      return db.getLastInsertId();
-    } catch (err) {
-      console.error('Error creating category:', err);
-      throw err;
-    }
-  };
-
-  return { categories, loadCategories, createCategory };
+  return { categories, loading, loadCategories };
 };
 

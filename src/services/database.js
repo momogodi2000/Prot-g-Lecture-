@@ -16,14 +16,17 @@ class DatabaseService {
       // Initialize SQL.js with local WASM file (bundled with sql.js package)
       // This fixes the Netlify WASM loading issue
       this.SQL = await initSqlJs({
-        locateFile: file => {
-          // In production, Vite bundles the WASM file
-          // For development, use the node_modules path
-          if (import.meta.env.DEV) {
-            return `node_modules/sql.js/dist/${file}`;
+        locateFile: (file) => {
+          // Always use the bundled WASM file path for consistency
+          // The Vite config ensures it's copied to /assets/wasm/ in both dev and prod
+          if (file === 'sql-wasm.wasm') {
+            const wasmPath = '/assets/wasm/sql-wasm.wasm';
+            console.log('🔧 Loading WASM from:', wasmPath);
+            return wasmPath;
           }
-          // In production, the WASM file will be in the assets folder
-          return `/assets/wasm/${file}`;
+          // For other files (like sql-wasm.js), use relative path
+          console.log('🔧 Loading SQL.js file:', file);
+          return file;
         }
       });
 
@@ -43,6 +46,16 @@ class DatabaseService {
       console.log('✅ Database initialized successfully');
     } catch (error) {
       console.error('❌ Error initializing database:', error);
+      
+      // Provide more specific error messages for WASM-related issues
+      if (error.message && error.message.includes('WebAssembly')) {
+        const enhancedError = new Error(
+          'Erreur de chargement WebAssembly. Vérifiez que le fichier WASM est accessible et que les en-têtes MIME sont corrects.'
+        );
+        enhancedError.originalError = error;
+        throw enhancedError;
+      }
+      
       throw error;
     }
   }

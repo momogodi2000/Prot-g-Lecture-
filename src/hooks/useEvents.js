@@ -1,118 +1,60 @@
 import { useState, useEffect } from 'react';
-import { useDatabase } from '../contexts/DatabaseContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useDatabase } from '../contexts/DatabaseContext';
+import apiService from '../services/api';
 import toast from 'react-hot-toast';
 
 export const useEvents = (filters = {}) => {
-  const { db } = useDatabase();
   const { currentAdmin } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState(null);
 
   useEffect(() => {
     loadEvents();
   }, [JSON.stringify(filters)]);
 
-  const loadEvents = () => {
+  const loadEvents = async () => {
     try {
       setLoading(true);
-      let query = `
-        SELECT 
-          e.*,
-          g.nom as groupe_nom,
-          l.titre as livre_titre,
-          a.nom_complet as createur_nom
-        FROM evenements e
-        LEFT JOIN groupes_lecture g ON e.groupe_lie = g.id
-        LEFT JOIN livres l ON e.livre_lie = l.id
-        LEFT JOIN administrateurs a ON e.cree_par = a.id
-        WHERE 1=1
-      `;
       
-      const params = [];
+      // Build query parameters
+      const params = {};
+      if (filters.search) params.search = filters.search;
+      if (filters.statut) params.statut = filters.statut;
+      else if (!currentAdmin) params.statut = 'publie'; // Only show published events to visitors
+      if (filters.type) params.type = filters.type;
+      if (filters.limit) params.limit = filters.limit;
+      if (filters.offset) params.offset = filters.offset;
 
-      if (filters.statut) {
-        query += ` AND e.statut = ?`;
-        params.push(filters.statut);
-      } else if (!currentAdmin) {
-        // Only show published events to visitors
-        query += ` AND e.statut = ?`;
-        params.push('publie');
-      }
-
-      if (filters.type) {
-        query += ` AND e.type = ?`;
-        params.push(filters.type);
-      }
-
-      if (filters.search) {
-        query += ` AND (e.titre LIKE ? OR e.description LIKE ?)`;
-        const searchTerm = `%${filters.search}%`;
-        params.push(searchTerm, searchTerm);
-      }
-
-      query += ` ORDER BY e.date_debut DESC`;
-
-      const results = db.query(query, params);
-      setEvents(results || []);
+      const response = await apiService.getEvents(params);
+      setEvents(response.events || []);
+      setPagination(response.pagination || null);
     } catch (err) {
       console.error('Error loading events:', err);
       setEvents([]);
+      setPagination(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const getEvent = (id) => {
+  const getEvent = async (id) => {
     try {
-      const query = `
-        SELECT 
-          e.*,
-          g.nom as groupe_nom,
-          l.titre as livre_titre,
-          a.nom_complet as createur_nom
-        FROM evenements e
-        LEFT JOIN groupes_lecture g ON e.groupe_lie = g.id
-        LEFT JOIN livres l ON e.livre_lie = l.id
-        LEFT JOIN administrateurs a ON e.cree_par = a.id
-        WHERE e.id = ?
-      `;
-      return db.queryOne(query, [id]);
+      const response = await apiService.getEvent(id);
+      return response.event;
     } catch (err) {
       console.error('Error getting event:', err);
       throw err;
     }
   };
 
-  const createEvent = (eventData) => {
+  const createEvent = async (eventData) => {
     try {
-      const query = `
-        INSERT INTO evenements (
-          titre, description, type, date_debut, date_fin,
-          lieu, image_principale, lien_externe, groupe_lie,
-          livre_lie, statut, cree_par
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-      
-      db.run(query, [
-        eventData.titre,
-        eventData.description,
-        eventData.type,
-        eventData.date_debut,
-        eventData.date_fin || null,
-        eventData.lieu || null,
-        eventData.image_principale || null,
-        eventData.lien_externe || null,
-        eventData.groupe_lie || null,
-        eventData.livre_lie || null,
-        eventData.statut || 'brouillon',
-        currentAdmin?.id
-      ]);
-
-      const id = db.getLastInsertId();
+      const response = await apiService.createEvent(eventData);
       toast.success('Événement créé avec succès');
       loadEvents();
-      return id;
+      return response.eventId;
     } catch (err) {
       console.error('Error creating event:', err);
       toast.error('Erreur lors de la création de l\'événement');
@@ -120,31 +62,9 @@ export const useEvents = (filters = {}) => {
     }
   };
 
-  const updateEvent = (id, eventData) => {
+  const updateEvent = async (id, eventData) => {
     try {
-      const query = `
-        UPDATE evenements SET
-          titre = ?, description = ?, type = ?, date_debut = ?,
-          date_fin = ?, lieu = ?, image_principale = ?,
-          lien_externe = ?, groupe_lie = ?, livre_lie = ?, statut = ?
-        WHERE id = ?
-      `;
-      
-      db.run(query, [
-        eventData.titre,
-        eventData.description,
-        eventData.type,
-        eventData.date_debut,
-        eventData.date_fin,
-        eventData.lieu,
-        eventData.image_principale,
-        eventData.lien_externe,
-        eventData.groupe_lie,
-        eventData.livre_lie,
-        eventData.statut,
-        id
-      ]);
-
+      await apiService.updateEvent(id, eventData);
       toast.success('Événement mis à jour avec succès');
       loadEvents();
     } catch (err) {
@@ -154,12 +74,9 @@ export const useEvents = (filters = {}) => {
     }
   };
 
-  const publishEvent = (id) => {
+  const publishEvent = async (id) => {
     try {
-      db.run(
-        'UPDATE evenements SET statut = ?, publie_le = ? WHERE id = ?',
-        ['publie', new Date().toISOString(), id]
-      );
+      await updateEvent(id, { statut: 'publie' });
       toast.success('Événement publié');
       loadEvents();
     } catch (err) {
@@ -169,9 +86,9 @@ export const useEvents = (filters = {}) => {
     }
   };
 
-  const deleteEvent = (id) => {
+  const deleteEvent = async (id) => {
     try {
-      db.run('DELETE FROM evenements WHERE id = ?', [id]);
+      await apiService.deleteEvent(id);
       toast.success('Événement supprimé');
       loadEvents();
     } catch (err) {
@@ -184,6 +101,7 @@ export const useEvents = (filters = {}) => {
   return {
     events,
     loading,
+    pagination,
     loadEvents,
     getEvent,
     createEvent,
@@ -194,6 +112,7 @@ export const useEvents = (filters = {}) => {
 };
 
 export const useNews = (filters = {}) => {
+  // Note: This hook still uses direct database access until backend API is implemented for news
   const { db } = useDatabase();
   const { currentAdmin } = useAuth();
   const [news, setNews] = useState([]);

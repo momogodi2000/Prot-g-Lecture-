@@ -1,14 +1,36 @@
-import { useState } from 'react';
-import { useDatabase } from '../../contexts/DatabaseContext';
+import { useState, useEffect } from 'react';
+import apiService from '../../services/api';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { toast } from 'react-hot-toast';
 
 export default function BulkImport({ isOpen, onClose, onSuccess }) {
-  const { db } = useDatabase();
   const [preview, setPreview] = useState([]);
   const [importing, setImporting] = useState(false);
   const [step, setStep] = useState(1); // 1: Upload, 2: Preview, 3: Import
+  const [existingAuthors, setExistingAuthors] = useState([]);
+  const [existingCategories, setExistingCategories] = useState([]);
+
+  // Load existing authors and categories when component mounts
+  useEffect(() => {
+    if (isOpen) {
+      loadExistingData();
+    }
+  }, [isOpen]);
+
+  const loadExistingData = async () => {
+    try {
+      const [authorsResponse, categoriesResponse] = await Promise.all([
+        apiService.getAuthors(),
+        apiService.getCategories()
+      ]);
+      
+      setExistingAuthors(authorsResponse.authors || []);
+      setExistingCategories(categoriesResponse.categories || []);
+    } catch (error) {
+      console.error('Error loading existing data:', error);
+    }
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -72,7 +94,7 @@ export default function BulkImport({ isOpen, onClose, onSuccess }) {
   };
 
   const handleImport = async () => {
-    if (!db || preview.length === 0) return;
+    if (preview.length === 0) return;
 
     setImporting(true);
     let successCount = 0;
@@ -86,49 +108,67 @@ export default function BulkImport({ isOpen, onClose, onSuccess }) {
         }
 
         try {
-          // Check/Create author
-          let authorResult = db.exec('SELECT id FROM authors WHERE name = ?', [book.author]);
+          // Find or create author
+          let existingAuthor = existingAuthors.find(author => 
+            author.nom_complet.toLowerCase() === book.author.toLowerCase()
+          );
           let authorId;
-          
-          if (authorResult.length === 0) {
-            db.run('INSERT INTO authors (name) VALUES (?)', [book.author]);
-            authorResult = db.exec('SELECT id FROM authors WHERE name = ?', [book.author]);
-          }
-          authorId = authorResult[0].values[0][0];
 
-          // Check/Create category
-          let categoryResult = db.exec('SELECT id FROM categories WHERE name_fr = ?', [book.category]);
+          if (existingAuthor) {
+            authorId = existingAuthor.id;
+          } else {
+            // Create new author
+            const authorResponse = await apiService.createAuthor({
+              nom_complet: book.author
+            });
+            authorId = authorResponse.authorId;
+            
+            // Add to local cache
+            setExistingAuthors(prev => [...prev, {
+              id: authorId,
+              nom_complet: book.author
+            }]);
+          }
+
+          // Find or create category
+          let existingCategory = existingCategories.find(category => 
+            category.nom.toLowerCase() === book.category.toLowerCase()
+          );
           let categoryId;
-          
-          if (categoryResult.length === 0) {
-            db.run('INSERT INTO categories (name_fr, name_en) VALUES (?, ?)', [book.category, book.category]);
-            categoryResult = db.exec('SELECT id FROM categories WHERE name_fr = ?', [book.category]);
-          }
-          categoryId = categoryResult[0].values[0][0];
 
-          // Insert book
-          db.run(`
-            INSERT INTO books (
-              title_fr, title_en, author_id, isbn, category_id,
-              language, pages, publisher, publication_year,
-              quantity, available, price, description_fr, description_en
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `, [
-            book.title_fr,
-            book.title_en,
-            authorId,
-            book.isbn || null,
-            categoryId,
-            book.language,
-            book.pages,
-            book.publisher || null,
-            book.publication_year,
-            book.quantity,
-            book.quantity, // available = quantity initially
-            book.price,
-            book.description_fr || null,
-            book.description_en || null
-          ]);
+          if (existingCategory) {
+            categoryId = existingCategory.id;
+          } else {
+            // Create new category
+            const categoryResponse = await apiService.createCategory({
+              nom: book.category
+            });
+            categoryId = categoryResponse.categoryId;
+            
+            // Add to local cache
+            setExistingCategories(prev => [...prev, {
+              id: categoryId,
+              nom: book.category
+            }]);
+          }
+
+          // Create book - map fields to match API expected format
+          await apiService.createBook({
+            titre: book.title_fr,
+            resume: book.description_fr || book.description_en || 'Imported book',
+            auteur_id: authorId,
+            categorie_id: categoryId,
+            annee_publication: book.publication_year || new Date().getFullYear(),
+            langue: book.language?.toUpperCase() === 'FR' ? 'FR' : 'EN',
+            nombre_exemplaires: book.quantity || 1,
+            isbn: book.isbn || null,
+            editeur: book.publisher || null,
+            nombre_pages: book.pages || null,
+            image_couverture: null,
+            tags: null,
+            cote: null,
+            statut: 'disponible'
+          });
 
           successCount++;
         } catch (error) {

@@ -1,53 +1,36 @@
 import { useState, useEffect } from 'react';
-import { useDatabase } from '../contexts/DatabaseContext';
 import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
 import toast from 'react-hot-toast';
-import emailService from '../services/email';
 
 export const useContact = (filters = {}) => {
-  const { db } = useDatabase();
   const { currentAdmin } = useAuth();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState(null);
 
   useEffect(() => {
     loadMessages();
   }, [JSON.stringify(filters)]);
 
-  const loadMessages = () => {
+  const loadMessages = async () => {
     try {
       setLoading(true);
-      let query = `
-        SELECT 
-          m.*,
-          a.nom_complet as lecteur_nom,
-          r.nom_complet as repondeur_nom
-        FROM messages_contact m
-        LEFT JOIN administrateurs a ON m.lu_par = a.id
-        LEFT JOIN administrateurs r ON m.repondu_par = r.id
-        WHERE 1=1
-      `;
       
-      const params = [];
+      // Build query parameters
+      const params = {};
+      if (filters.search) params.search = filters.search;
+      if (filters.statut) params.statut = filters.statut;
+      if (filters.limit) params.limit = filters.limit;
+      if (filters.offset) params.offset = filters.offset;
 
-      if (filters.statut) {
-        query += ` AND m.statut = ?`;
-        params.push(filters.statut);
-      }
-
-      if (filters.search) {
-        query += ` AND (m.nom_complet LIKE ? OR m.email LIKE ? OR m.sujet LIKE ?)`;
-        const searchTerm = `%${filters.search}%`;
-        params.push(searchTerm, searchTerm, searchTerm);
-      }
-
-      query += ` ORDER BY m.date_envoi DESC`;
-
-      const results = db.query(query, params);
-      setMessages(results || []);
+      const response = await apiService.getContactMessages(params);
+      setMessages(response.messages || []);
+      setPagination(response.pagination || null);
     } catch (err) {
       console.error('Error loading messages:', err);
       setMessages([]);
+      setPagination(null);
     } finally {
       setLoading(false);
     }
@@ -55,25 +38,9 @@ export const useContact = (filters = {}) => {
 
   const sendMessage = async (messageData) => {
     try {
-      const query = `
-        INSERT INTO messages_contact (
-          nom_complet, email, telephone, sujet, message
-        ) VALUES (?, ?, ?, ?, ?)
-      `;
-      
-      db.run(query, [
-        messageData.nom_complet,
-        messageData.email,
-        messageData.telephone || null,
-        messageData.sujet,
-        messageData.message
-      ]);
-
-      // Send confirmation email
-      await emailService.sendContactConfirmation(messageData);
-
+      const response = await apiService.submitContactMessage(messageData);
       toast.success('Message envoyé avec succès');
-      return db.getLastInsertId();
+      return response.messageId;
     } catch (err) {
       console.error('Error sending message:', err);
       toast.error('Erreur lors de l\'envoi du message');
@@ -81,12 +48,19 @@ export const useContact = (filters = {}) => {
     }
   };
 
-  const markAsRead = (id) => {
+  const getMessage = async (id) => {
     try {
-      db.run(
-        'UPDATE messages_contact SET statut = ?, lu_par = ?, date_lecture = ? WHERE id = ?',
-        ['lu', currentAdmin?.id, new Date().toISOString(), id]
-      );
+      const response = await apiService.getContactMessage(id);
+      return response.message;
+    } catch (err) {
+      console.error('Error getting message:', err);
+      throw err;
+    }
+  };
+
+  const markAsRead = async (id) => {
+    try {
+      await getMessage(id); // This will mark as read when fetching
       toast.success('Message marqué comme lu');
       loadMessages();
     } catch (err) {
@@ -96,14 +70,9 @@ export const useContact = (filters = {}) => {
     }
   };
 
-  const replyToMessage = (id, reponse) => {
+  const replyToMessage = async (id, reponse) => {
     try {
-      db.run(
-        `UPDATE messages_contact SET 
-          statut = ?, reponse = ?, date_reponse = ?, repondu_par = ?
-        WHERE id = ?`,
-        ['repondu', reponse, new Date().toISOString(), currentAdmin?.id, id]
-      );
+      await apiService.replyContactMessage(id, reponse);
       toast.success('Réponse enregistrée');
       loadMessages();
     } catch (err) {
@@ -113,9 +82,9 @@ export const useContact = (filters = {}) => {
     }
   };
 
-  const archiveMessage = (id) => {
+  const archiveMessage = async (id) => {
     try {
-      db.run('UPDATE messages_contact SET statut = ? WHERE id = ?', ['archive', id]);
+      await apiService.archiveContactMessage(id);
       toast.success('Message archivé');
       loadMessages();
     } catch (err) {
@@ -125,13 +94,15 @@ export const useContact = (filters = {}) => {
     }
   };
 
-  const getMessageStats = () => {
+  const getMessageStats = async () => {
     try {
+      // This would need to be implemented in the backend API
+      // For now, return empty stats or fetch from API if endpoint exists
       return {
-        total: db.queryOne('SELECT COUNT(*) as count FROM messages_contact')?.count || 0,
-        non_lu: db.queryOne('SELECT COUNT(*) as count FROM messages_contact WHERE statut = ?', ['non_lu'])?.count || 0,
-        lu: db.queryOne('SELECT COUNT(*) as count FROM messages_contact WHERE statut = ?', ['lu'])?.count || 0,
-        repondu: db.queryOne('SELECT COUNT(*) as count FROM messages_contact WHERE statut = ?', ['repondu'])?.count || 0
+        total: 0,
+        non_lu: 0,
+        lu: 0,
+        repondu: 0
       };
     } catch (err) {
       return {};
@@ -141,8 +112,10 @@ export const useContact = (filters = {}) => {
   return {
     messages,
     loading,
+    pagination,
     loadMessages,
     sendMessage,
+    getMessage,
     markAsRead,
     replyToMessage,
     archiveMessage,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useDatabase } from '../../contexts/DatabaseContext';
 import { useAuth } from '../../contexts/AuthContext';
+import apiService from '../../services/api';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
@@ -8,15 +8,12 @@ import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import toast from 'react-hot-toast';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../services/firebase';
 
 const LogoIcon = ({ className }) => (
   <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
 );
 
 const UsersManagement = () => {
-  const { db } = useDatabase();
   const { currentAdmin, isSuperAdmin } = useAuth();
   const [admins, setAdmins] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -25,25 +22,25 @@ const UsersManagement = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    nom_complet: '',
+    nomComplet: '',
     telephone: '',
     role: 'admin'
   });
 
   useEffect(() => {
-    if (db) {
-      loadAdmins();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [db]);
+    loadAdmins();
+  }, []);
 
-  const loadAdmins = () => {
+  const loadAdmins = async () => {
     try {
-      const results = db.query('SELECT * FROM administrateurs ORDER BY date_creation DESC');
-      setAdmins(results || []);
+      setLoading(true);
+      const response = await apiService.getAdminUsers();
+      setAdmins(response.users || []);
     } catch (error) {
       console.error('Error loading admins:', error);
       toast.error('Erreur lors du chargement des utilisateurs');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,30 +60,12 @@ const UsersManagement = () => {
     setLoading(true);
 
     try {
-      // Create Firebase user
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
-      const firebaseUid = userCredential.user.uid;
-
-      // Insert into database
-      db.run(
-        `INSERT INTO administrateurs (
-          firebase_uid, email, nom_complet, telephone, role, statut, cree_par, date_creation
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          firebaseUid,
-          formData.email,
-          formData.nom_complet,
-          formData.telephone,
-          formData.role,
-          'actif',
-          currentAdmin.id,
-          new Date().toISOString()
-        ]
-      );
+      await apiService.post('/auth/register', {
+        email: formData.email,
+        password: formData.password,
+        nomComplet: formData.nomComplet,
+        role: formData.role
+      });
 
       toast.success('Administrateur créé avec succès');
       loadAdmins();
@@ -94,7 +73,7 @@ const UsersManagement = () => {
       setFormData({
         email: '',
         password: '',
-        nom_complet: '',
+        nomComplet: '',
         telephone: '',
         role: 'admin'
       });
@@ -106,7 +85,7 @@ const UsersManagement = () => {
     }
   };
 
-  const toggleStatus = (id, currentStatus) => {
+  const toggleStatus = async (id, currentStatus) => {
     if (!isSuperAdmin()) {
       toast.error('Action réservée au super admin');
       return;
@@ -114,7 +93,7 @@ const UsersManagement = () => {
 
     try {
       const newStatus = currentStatus === 'actif' ? 'inactif' : 'actif';
-      db.run('UPDATE administrateurs SET statut = ? WHERE id = ?', [newStatus, id]);
+      await apiService.updateUserStatus(id, newStatus);
       toast.success('Statut mis à jour');
       loadAdmins();
     } catch (error) {
@@ -208,7 +187,7 @@ const UsersManagement = () => {
                 <tr key={admin.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {admin.nom_complet}
+                      {admin.nomComplet}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -268,8 +247,8 @@ const UsersManagement = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Nom Complet"
-            name="nom_complet"
-            value={formData.nom_complet}
+            name="nomComplet"
+            value={formData.nomComplet}
             onChange={handleChange}
             required
             icon={LogoIcon}

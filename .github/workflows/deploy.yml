@@ -1,4 +1,4 @@
-name: Deploy to Netlify
+name: Deploy Full-Stack App
 
 on:
   push:
@@ -6,8 +6,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  # Deploy to Render (Full-stack)
+  deploy-render:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🚀 Deploy to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+
+  # Deploy Frontend to Netlify (Optional - for static hosting)
+  deploy-netlify:
+    runs-on: ubuntu-latest
+    if: false  # Disabled by default, enable if needed
     
     steps:
       - name: 📥 Checkout code
@@ -22,16 +41,10 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
       
-      - name: 🏗️ Build project
+      - name: 🏗️ Build frontend
         run: npm run build
         env:
-          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
       
       - name: 🚀 Deploy to Netlify
         uses: nwtgck/actions-netlify@v3.0
@@ -39,10 +52,7 @@ jobs:
           publish-dir: './dist'
           production-branch: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: true
-          enable-commit-comment: true
-          overwrites-pull-request-comment: true
+          deploy-message: "Deploy frontend from GitHub Actions"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -51,4 +61,4 @@ jobs:
       - name: 📊 Deployment Summary
         run: |
           echo "### ✅ Deployment Successful 🚀" >> $GITHUB_STEP_SUMMARY
-          echo "Site deployed to Netlify" >> $GITHUB_STEP_SUMMARY
+          echo "Full-stack app deployed to Render" >> $GITHUB_STEP_SUMMARY

@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useDatabase } from '../../contexts/DatabaseContext';
 import Card from '../common/Card';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
+import apiService from '../../services/api';
 import storageService from '../../services/storage';
 import toast from 'react-hot-toast';
 
@@ -12,7 +12,6 @@ const LogoIcon = ({ className }) => (
 
 const BookCard = ({ book, isAdmin = false, onDelete }) => {
   const navigate = useNavigate();
-  const { db } = useDatabase();
   const getStatusVariant = (statut) => {
     switch (statut) {
       case 'disponible':
@@ -50,7 +49,7 @@ const BookCard = ({ book, isAdmin = false, onDelete }) => {
     e.preventDefault();
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) {
       try {
-        db.run('DELETE FROM livres WHERE id = ?', [book.id]);
+        await apiService.deleteBook(book.id);
         toast.success('Livre supprimé avec succès');
         if (onDelete) onDelete();
       } catch (error) {

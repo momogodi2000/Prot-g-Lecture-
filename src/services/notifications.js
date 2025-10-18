@@ -1,10 +1,8 @@
-import { getToken, onMessage } from 'firebase/messaging';
-import { messaging } from './firebase';
-
 class NotificationService {
   constructor() {
     this.token = null;
     this.messageHandlers = [];
+    this.isListening = false;
   }
 
   // Request notification permission
@@ -31,51 +29,50 @@ class NotificationService {
     }
   }
 
-  // Get FCM token
+  // Get notification token - simplified for web notifications
   async getToken() {
-    if (!messaging) {
-      console.log('Messaging not supported in this browser');
-      return null;
-    }
-
     try {
-      const token = await getToken(messaging, {
-        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
-      });
-
-      if (token) {
-        this.token = token;
-        console.log('FCM Token obtained:', token);
-        await this.saveTokenForAdmin(token);
-        return token;
+      if (!('Notification' in window) || Notification.permission !== 'granted') {
+        console.log('Notifications not supported or not granted');
+        return null;
       }
+
+      // For web notifications, we don't need FCM token
+      // We can use a simple identifier for the browser
+      const token = `web_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      this.token = token;
+      
+      console.log('Notification token obtained:', token);
+      await this.saveTokenForAdmin(token);
+      return token;
     } catch (error) {
-      console.error('Error getting FCM token:', error);
+      console.error('Error getting notification token:', error);
       return null;
     }
   }
 
-  // Listen for foreground messages
+  // Listen for messages - simplified for web notifications
   listenForMessages(callback) {
-    if (!messaging) {
-      console.log('Messaging not supported');
-      return () => {};
+    if (!this.isListening) {
+      // Set up polling or WebSocket connection for real-time notifications
+      // For now, we'll use a simple polling mechanism
+      this.startPolling(callback);
+      this.isListening = true;
     }
 
-    const unsubscribe = onMessage(messaging, (payload) => {
-      console.log('Message received in foreground:', payload);
-      
-      if (callback) {
-        callback(payload);
-      } else {
-        this.showNotification(payload.notification);
-      }
-      
-      // Call all registered handlers
-      this.messageHandlers.forEach(handler => handler(payload));
-    });
+    // Return unsubscribe function
+    return () => {
+      this.messageHandlers = this.messageHandlers.filter(h => h !== callback);
+    };
+  }
 
-    return unsubscribe;
+  // Start polling for messages (placeholder for real WebSocket implementation)
+  startPolling(callback) {
+    // This would typically use WebSockets or Server-Sent Events
+    // For now, just register the callback
+    if (callback) {
+      this.messageHandlers.push(callback);
+    }
   }
 
   // Register message handler
@@ -114,26 +111,26 @@ class NotificationService {
   // Save token for admin
   async saveTokenForAdmin(token) {
     try {
-      localStorage.setItem('fcm_token', token);
+      localStorage.setItem('notification_token', token);
     } catch (error) {
-      console.error('Error saving FCM token:', error);
+      console.error('Error saving notification token:', error);
     }
   }
 
   // Get saved token
   getSavedToken() {
-    return localStorage.getItem('fcm_token');
+    return localStorage.getItem('notification_token');
   }
 
   // Clear token
   clearToken() {
     this.token = null;
-    localStorage.removeItem('fcm_token');
+    localStorage.removeItem('notification_token');
   }
 
   // Check if notifications are supported
   isSupported() {
-    return 'Notification' in window && !!messaging;
+    return 'Notification' in window;
   }
 
   // Get permission status

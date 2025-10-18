@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import authService from '../services/auth';
+import apiService from '../services/api';
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext(null);
 
@@ -8,51 +9,96 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = authService.initAuthListener((admin) => {
-      setCurrentAdmin(admin);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    initializeAuth();
   }, []);
 
-  const login = async (email, password) => {
-    const admin = await authService.loginWithEmail(email, password);
-    setCurrentAdmin(admin);
-    return admin;
+  const initializeAuth = async () => {
+    try {
+      setLoading(true);
+      
+      // Check if we have a token
+      const token = apiService.getToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      // Verify token and get user data
+      const response = await apiService.getCurrentUser();
+      if (response.user) {
+        setCurrentAdmin(response.user);
+      } else {
+        // Invalid token, clear it
+        apiService.setToken(null);
+      }
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      apiService.setToken(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const loginWithGoogle = async () => {
-    const admin = await authService.loginWithGoogle();
-    setCurrentAdmin(admin);
-    return admin;
+  const login = async (email, password) => {
+    try {
+      const response = await apiService.login(email, password);
+      if (response.user) {
+        setCurrentAdmin(response.user);
+        toast.success('Connexion réussie');
+        return response.user;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {
-    await authService.logout();
-    setCurrentAdmin(null);
+    try {
+      await apiService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setCurrentAdmin(null);
+      apiService.setToken(null);
+      toast.success('Déconnexion réussie');
+    }
   };
 
   const hasPrivilege = (module, action) => {
-    return authService.hasPrivilege(module, action);
+    if (!currentAdmin) return false;
+    if (currentAdmin.role === 'super_admin') return true;
+
+    const privileges = currentAdmin.privileges || {};
+    return privileges[module]?.[action] === true;
   };
 
   const isAuthenticated = () => {
-    return !!currentAdmin;
+    return !!currentAdmin && !!apiService.getToken();
   };
 
   const isSuperAdmin = () => {
     return currentAdmin?.role === 'super_admin';
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      await apiService.changePassword(currentPassword, newPassword);
+      toast.success('Mot de passe modifié avec succès');
+    } catch (error) {
+      console.error('Password change error:', error);
+      throw error;
+    }
+  };
+
   const value = {
     currentAdmin,
     login,
-    loginWithGoogle,
     logout,
     hasPrivilege,
     isAuthenticated,
     isSuperAdmin,
+    changePassword,
     loading
   };
 

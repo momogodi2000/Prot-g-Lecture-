@@ -1,92 +1,50 @@
 import { useState, useEffect } from 'react';
-import { useDatabase } from '../contexts/DatabaseContext';
 import { useAuth } from '../contexts/AuthContext';
-import { generateReservationNumber } from '../utils/formatters';
+import apiService from '../services/api';
 import toast from 'react-hot-toast';
-import emailService from '../services/email';
 
 export const useReservations = (filters = {}) => {
-  const { db } = useDatabase();
   const { currentAdmin } = useAuth();
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState(null);
 
   useEffect(() => {
     loadReservations();
   }, [JSON.stringify(filters)]);
 
-  const loadReservations = () => {
+  const loadReservations = async () => {
     try {
       setLoading(true);
-      let query = `
-        SELECT 
-          r.*,
-          l.titre as livre_titre,
-          l.auteur_id,
-          a.nom_complet as auteur_nom,
-          adm.nom_complet as validateur_nom
-        FROM reservations r
-        LEFT JOIN livres l ON r.livre_id = l.id
-        LEFT JOIN auteurs a ON l.auteur_id = a.id
-        LEFT JOIN administrateurs adm ON r.valide_par = adm.id
-        WHERE 1=1
-      `;
-      
-      const params = [];
-
-      // Apply filters
-      if (filters.statut) {
-        query += ` AND r.statut = ?`;
-        params.push(filters.statut);
-      }
-
-      if (filters.date_souhaitee) {
-        query += ` AND r.date_souhaitee = ?`;
-        params.push(filters.date_souhaitee);
-      }
-
-      if (filters.livre_id) {
-        query += ` AND r.livre_id = ?`;
-        params.push(filters.livre_id);
-      }
-
-      if (filters.search) {
-        query += ` AND (r.nom_visiteur LIKE ? OR r.email_visiteur LIKE ? OR r.numero_reservation LIKE ?)`;
-        const searchTerm = `%${filters.search}%`;
-        params.push(searchTerm, searchTerm, searchTerm);
-      }
-
-      query += ` ORDER BY r.date_creation DESC`;
-
-      const results = db.query(query, params);
-      setReservations(results || []);
       setError(null);
+      
+      // Build query parameters
+      const params = {};
+      if (filters.search) params.search = filters.search;
+      if (filters.statut) params.statut = filters.statut;
+      if (filters.date_souhaitee) params.date_souhaitee = filters.date_souhaitee;
+      if (filters.livre_id) params.livre_id = filters.livre_id;
+      if (filters.limit) params.limit = filters.limit;
+      if (filters.offset) params.offset = filters.offset;
+
+      const response = await apiService.getReservations(params);
+      setReservations(response.reservations || []);
+      setPagination(response.pagination || null);
     } catch (err) {
       console.error('Error loading reservations:', err);
       setError(err.message);
       setReservations([]);
+      setPagination(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const getReservation = (id) => {
+  const getReservation = async (id) => {
     try {
-      const query = `
-        SELECT 
-          r.*,
-          l.titre as livre_titre,
-          l.image_couverture,
-          a.nom_complet as auteur_nom,
-          adm.nom_complet as validateur_nom
-        FROM reservations r
-        LEFT JOIN livres l ON r.livre_id = l.id
-        LEFT JOIN auteurs a ON l.auteur_id = a.id
-        LEFT JOIN administrateurs adm ON r.valide_par = adm.id
-        WHERE r.id = ?
-      `;
-      return db.queryOne(query, [id]);
+      const response = await apiService.getReservation(id);
+      return response.reservation;
     } catch (err) {
       console.error('Error getting reservation:', err);
       throw err;
@@ -95,53 +53,10 @@ export const useReservations = (filters = {}) => {
 
   const createReservation = async (reservationData) => {
     try {
-      // Generate unique reservation number
-      const numeroReservation = generateReservationNumber();
-
-      // Check availability
-      const book = db.queryOne('SELECT * FROM livres WHERE id = ?', [reservationData.livre_id]);
-      if (!book || book.exemplaires_disponibles < 1) {
-        throw new Error('Ce livre n\'est pas disponible');
-      }
-
-      // Insert reservation
-      const query = `
-        INSERT INTO reservations (
-          numero_reservation, livre_id, nom_visiteur, email_visiteur,
-          telephone_visiteur, date_souhaitee, creneau, commentaire, statut
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-      
-      db.run(query, [
-        numeroReservation,
-        reservationData.livre_id,
-        reservationData.nom_visiteur,
-        reservationData.email_visiteur,
-        reservationData.telephone_visiteur,
-        reservationData.date_souhaitee,
-        reservationData.creneau,
-        reservationData.commentaire || null,
-        'en_attente'
-      ]);
-
-      const id = db.getLastInsertId();
-
-      // Update book availability
-      db.run(
-        'UPDATE livres SET exemplaires_disponibles = exemplaires_disponibles - 1 WHERE id = ?',
-        [reservationData.livre_id]
-      );
-
-      // Send confirmation email
-      await emailService.sendReservationConfirmation({ 
-        ...reservationData, 
-        numero_reservation: numeroReservation 
-      }, book);
-
-      toast.success(`Réservation créée: ${numeroReservation}`);
+      const response = await apiService.createReservation(reservationData);
+      toast.success(`Réservation créée: ${response.numero_reservation}`);
       loadReservations();
-      
-      return { id, numero_reservation: numeroReservation };
+      return { id: response.reservationId, numero_reservation: response.numero_reservation };
     } catch (err) {
       console.error('Error creating reservation:', err);
       toast.error(err.message || 'Erreur lors de la création de la réservation');
@@ -151,24 +66,7 @@ export const useReservations = (filters = {}) => {
 
   const validateReservation = async (id) => {
     try {
-      const reservation = getReservation(id);
-      if (!reservation) throw new Error('Réservation introuvable');
-
-      db.run(
-        `UPDATE reservations SET 
-          statut = ?, 
-          date_validation = ?,
-          valide_par = ?
-        WHERE id = ?`,
-        ['validee', new Date().toISOString(), currentAdmin?.id, id]
-      );
-
-      // Get book info
-      const book = db.queryOne('SELECT * FROM livres WHERE id = ?', [reservation.livre_id]);
-
-      // Send validation email
-      await emailService.sendReservationValidation(reservation, book);
-
+      await apiService.updateReservationStatus(id, 'validee');
       toast.success('Réservation validée');
       loadReservations();
     } catch (err) {
@@ -180,30 +78,7 @@ export const useReservations = (filters = {}) => {
 
   const refuseReservation = async (id, motif) => {
     try {
-      const reservation = getReservation(id);
-      if (!reservation) throw new Error('Réservation introuvable');
-
-      db.run(
-        `UPDATE reservations SET 
-          statut = ?, 
-          remarque_admin = ?,
-          valide_par = ?
-        WHERE id = ?`,
-        ['refusee', motif, currentAdmin?.id, id]
-      );
-
-      // Restore book availability
-      db.run(
-        'UPDATE livres SET exemplaires_disponibles = exemplaires_disponibles + 1 WHERE id = ?',
-        [reservation.livre_id]
-      );
-
-      // Get book info
-      const book = db.queryOne('SELECT * FROM livres WHERE id = ?', [reservation.livre_id]);
-
-      // Send refusal email
-      await emailService.sendReservationRefusal(reservation, book, motif);
-
+      await apiService.updateReservationStatus(id, 'refusee', motif);
       toast.success('Réservation refusée');
       loadReservations();
     } catch (err) {
@@ -215,14 +90,7 @@ export const useReservations = (filters = {}) => {
 
   const completeReservation = async (id) => {
     try {
-      db.run(
-        `UPDATE reservations SET 
-          statut = ?, 
-          date_visite = ?
-        WHERE id = ?`,
-        ['terminee', new Date().toISOString(), id]
-      );
-
+      await apiService.updateReservationStatus(id, 'terminee');
       toast.success('Réservation marquée comme terminée');
       loadReservations();
     } catch (err) {
@@ -234,22 +102,7 @@ export const useReservations = (filters = {}) => {
 
   const cancelReservation = async (id) => {
     try {
-      const reservation = getReservation(id);
-      if (!reservation) throw new Error('Réservation introuvable');
-
-      db.run(
-        'UPDATE reservations SET statut = ? WHERE id = ?',
-        ['annulee', id]
-      );
-
-      // Restore book availability if not already validated
-      if (reservation.statut === 'en_attente' || reservation.statut === 'validee') {
-        db.run(
-          'UPDATE livres SET exemplaires_disponibles = exemplaires_disponibles + 1 WHERE id = ?',
-          [reservation.livre_id]
-        );
-      }
-
+      await apiService.updateReservationStatus(id, 'annulee');
       toast.success('Réservation annulée');
       loadReservations();
     } catch (err) {
@@ -259,16 +112,17 @@ export const useReservations = (filters = {}) => {
     }
   };
 
-  const getReservationStats = () => {
+  const getReservationStats = async () => {
     try {
-      const stats = {
-        total: db.queryOne('SELECT COUNT(*) as count FROM reservations')?.count || 0,
-        en_attente: db.queryOne('SELECT COUNT(*) as count FROM reservations WHERE statut = ?', ['en_attente'])?.count || 0,
-        validees: db.queryOne('SELECT COUNT(*) as count FROM reservations WHERE statut = ?', ['validee'])?.count || 0,
-        refusees: db.queryOne('SELECT COUNT(*) as count FROM reservations WHERE statut = ?', ['refusee'])?.count || 0,
-        terminees: db.queryOne('SELECT COUNT(*) as count FROM reservations WHERE statut = ?', ['terminee'])?.count || 0,
+      // This would need to be implemented in the backend API
+      // For now, return empty stats or fetch from API if endpoint exists
+      return {
+        total: 0,
+        en_attente: 0,
+        validees: 0,
+        refusees: 0,
+        terminees: 0,
       };
-      return stats;
     } catch (err) {
       console.error('Error getting reservation stats:', err);
       return {};
@@ -279,6 +133,7 @@ export const useReservations = (filters = {}) => {
     reservations,
     loading,
     error,
+    pagination,
     loadReservations,
     getReservation,
     createReservation,

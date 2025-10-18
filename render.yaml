@@ -1,0 +1,34 @@
+services:
+  # Backend API Service
+  - type: web
+    name: protege-lecture-backend
+    env: node
+    plan: free
+    buildCommand: |
+      npm ci
+      npm run migrate
+      npm run seed
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 5000
+      - key: FRONTEND_URL
+        value: https://protege-lecture-frontend.onrender.com
+      - key: DATABASE_PATH
+        value: /opt/render/project/src/database.sqlite
+
+  # Frontend Static Site
+  - type: web
+    name: protege-lecture-frontend
+    env: static
+    buildCommand: |
+      npm ci
+      npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://protege-lecture-backend.onrender.com/api

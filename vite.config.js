@@ -2,16 +2,31 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { compression } from './scripts/compression-plugin.js'
-import { copyFileSync, mkdirSync } from 'fs'
+import { copyFileSync, mkdirSync, readFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// Plugin to copy sql.js WASM file to build output
+// Plugin to copy sql.js WASM file to build output and serve in dev
 function copySqlJsWasm() {
   return {
     name: 'copy-sqljs-wasm',
+    configureServer(server) {
+      // Serve WASM file in development
+      server.middlewares.use('/assets/wasm/sql-wasm.wasm', (req, res, next) => {
+        try {
+          const wasmPath = join(__dirname, 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm')
+          const wasmData = readFileSync(wasmPath)
+          res.setHeader('Content-Type', 'application/wasm')
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+          res.end(wasmData)
+        } catch (error) {
+          console.error('Error serving WASM file:', error)
+          next(error)
+        }
+      })
+    },
     writeBundle() {
       const wasmSrc = join(__dirname, 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm')
       const wasmDest = join(__dirname, 'dist', 'assets', 'wasm', 'sql-wasm.wasm')

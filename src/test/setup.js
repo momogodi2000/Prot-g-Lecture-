@@ -1,113 +1,44 @@
-import { expect, afterEach, vi } from 'vitest';
-import { cleanup } from '@testing-library/react';
-import * as matchers from '@testing-library/jest-dom/matchers';
+import { beforeAll, afterAll, beforeEach } from 'vitest';
 
-// Mock DOMPurify BEFORE any imports that use it
-vi.mock('dompurify', () => {
-  const createDOMPurify = () => ({
-    sanitize: (dirty, config = {}) => {
-      if (typeof dirty !== 'string') return '';
-      
-      // Simple sanitization for testing
-      let clean = dirty;
-      
-      // Remove script tags
-      clean = clean.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-      
-      // Remove dangerous protocols
-      clean = clean.replace(/javascript:/gi, '');
-      clean = clean.replace(/data:/gi, '');
-      clean = clean.replace(/vbscript:/gi, '');
-      
-      // Remove event handlers
-      clean = clean.replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
-      
-      // If ALLOWED_TAGS is empty array, strip all HTML
-      if (config.ALLOWED_TAGS && config.ALLOWED_TAGS.length === 0) {
-        clean = clean.replace(/<[^>]*>/g, '');
-      }
-      
-      return clean;
-    },
-  });
-  
-  return {
-    default: createDOMPurify(),
-  };
-});
+// Mock browser globals for Node.js testing environment
+global.fetch = vi.fn();
+global.Headers = vi.fn();
+global.Request = vi.fn();
+global.Response = vi.fn();
 
-// Extend Vitest's expect with jest-dom matchers
-expect.extend(matchers);
-
-// Cleanup after each test
-afterEach(() => {
-  cleanup();
-});
-
-// Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: (query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: () => {}, // deprecated
-    removeListener: () => {}, // deprecated
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => {},
-  }),
-});
-
-// Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  takeRecords() {
-    return [];
-  }
-  unobserve() {}
+// Mock localStorage for tests
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
-
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  unobserve() {}
-};
-
-// Mock localStorage with actual storage
-const localStorageMock = (() => {
-  let store = {};
-  return {
-    getItem: (key) => store[key] || null,
-    setItem: (key, value) => { store[key] = value.toString(); },
-    removeItem: (key) => { delete store[key]; },
-    clear: () => { store = {}; },
-  };
-})();
 global.localStorage = localStorageMock;
 
-// Mock sessionStorage with actual storage
-const sessionStorageMock = (() => {
-  let store = {};
-  return {
-    getItem: (key) => store[key] || null,
-    setItem: (key, value) => { store[key] = value.toString(); },
-    removeItem: (key) => { delete store[key]; },
-    clear: () => { store = {}; },
-  };
-})();
+// Mock sessionStorage
+const sessionStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+};
 global.sessionStorage = sessionStorageMock;
 
-// Mock Firebase
-vi.mock('../services/firebase', () => ({
-  auth: {},
-  analytics: null,
-  performance: {},
-  messaging: null,
-  remoteConfig: {},
-  googleProvider: {},
-}));
+// Mock window object
+global.window = {
+  location: {
+    href: 'http://localhost:3000',
+    origin: 'http://localhost:3000',
+  },
+  history: {
+    pushState: vi.fn(),
+    replaceState: vi.fn(),
+  },
+};
+
+beforeEach(() => {
+  // Clear all mocks before each test
+  vi.clearAllMocks();
+  localStorageMock.clear();
+  sessionStorageMock.clear();
+});
