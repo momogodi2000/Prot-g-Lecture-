@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,9 @@ export const initializeDatabase = () => {
 
     // Run migrations
     runMigrations();
+
+    // Run initial seeding if needed
+    runInitialSeeding();
 
     console.log(`✅ Database initialized at ${dbPath}`);
     return db;
@@ -414,6 +418,37 @@ const insertDefaultData = () => {
     }
   } catch (error) {
     console.warn('Error inserting default data:', error.message);
+  }
+};
+
+const runInitialSeeding = () => {
+  try {
+    // Check if we need to create super admin
+    const adminCount = db.prepare('SELECT COUNT(*) as count FROM administrateurs').get();
+    
+    if (adminCount.count === 0) {
+      console.log('👤 Creating initial super admin...');
+      
+      const defaultPassword = process.env.INITIAL_ADMIN_PASSWORD || '@Douala237';
+      const email = process.env.INITIAL_ADMIN_EMAIL || 'yvangodimomo@gmail.com';
+      const nomComplet = process.env.INITIAL_ADMIN_NAME || 'Super Administrateur';
+      
+      // Use sync bcrypt for initial setup (not ideal but needed for sync database init)
+      const saltRounds = 12;
+      const passwordHash = bcrypt.hashSync(defaultPassword, saltRounds);
+
+      const result = db.prepare(`
+        INSERT INTO administrateurs (email, password_hash, nom_complet, role, statut, date_creation)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(email, passwordHash, nomComplet, 'super_admin', 'actif', new Date().toISOString());
+
+      console.log(`✅ Super admin created with ID: ${result.lastInsertRowid}`);
+      console.log(`📧 Email: ${email}`);
+      console.log(`🔑 Password: ${defaultPassword}`);
+      console.log('⚠️  Please change the default password after first login!');
+    }
+  } catch (error) {
+    console.warn('Error during initial seeding:', error.message);
   }
 };
 

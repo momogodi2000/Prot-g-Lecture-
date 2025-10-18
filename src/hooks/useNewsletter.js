@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { generateId } from '../utils/helpers';
 import emailService from '../services/email';
+import apiService from '../services/api';
 
 export const useNewsletter = (filters = {}) => {
   const { db } = useDatabase();
@@ -46,44 +47,10 @@ export const useNewsletter = (filters = {}) => {
 
   const subscribe = async (email, nomComplet = null) => {
     try {
-      // Check if already subscribed
-      const existing = db.queryOne(
-        'SELECT * FROM newsletter_abonnes WHERE email = ?',
-        [email]
-      );
-
-      if (existing) {
-        if (existing.statut === 'actif') {
-          throw new Error('Cet email est déjà inscrit');
-        } else {
-          // Reactivate subscription
-          db.run(
-            'UPDATE newsletter_abonnes SET statut = ?, date_inscription = ? WHERE email = ?',
-            ['actif', new Date().toISOString(), email]
-          );
-          toast.success('Inscription réactivée');
-          return existing.id;
-        }
-      }
-
-      // Create new subscription
-      const token = generateId();
-      const query = `
-        INSERT INTO newsletter_abonnes (
-          email, nom_complet, token_desinscription, statut
-        ) VALUES (?, ?, ?, ?)
-      `;
-      
-      db.run(query, [email, nomComplet, token, 'actif']);
-
-      const id = db.getLastInsertId();
-
-      // Send welcome email
-      await emailService.sendNewsletterConfirmation({ email, nom_complet: nomComplet, token_desinscription: token });
-
-      toast.success('Inscription réussie ! Vérifiez votre email.');
-      loadSubscribers();
-      return id;
+      // Use API service for public newsletter subscription
+      await apiService.subscribeNewsletter(email, nomComplet);
+      toast.success('Inscription à la newsletter réussie !');
+      return true;
     } catch (err) {
       console.error('Error subscribing:', err);
       toast.error(err.message || 'Erreur lors de l\'inscription');

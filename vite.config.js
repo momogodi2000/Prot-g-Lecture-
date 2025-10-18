@@ -90,7 +90,7 @@ export default defineConfig({
   // Worker configuration for WASM support
   worker: {
     format: 'es',
-    plugins: [],
+    plugins: () => [],
   },
   
   build: {
