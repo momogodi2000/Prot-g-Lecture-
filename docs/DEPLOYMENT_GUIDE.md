@@ -41,12 +41,22 @@ Ensure your `render.yaml` file is in the root directory (already created).
    - Render will auto-detect the `render.yaml` configuration
 
 3. **Environment Variables**
-   Set these in Render Dashboard:
-   ```bash
+   The `render.yaml` file is already configured with the correct environment variables:
+   ```yaml
    NODE_ENV=production
-   JWT_SECRET=your-super-secret-jwt-key-here
-   FRONTEND_URL=https://your-app-name.onrender.com
+   JWT_SECRET=auto-generated-by-render
+   JWT_EXPIRES_IN=24h
+   PORT=5000
+   FRONTEND_URL=https://protege-lecture-frontend.onrender.com
    DATABASE_PATH=/opt/render/project/src/database.sqlite
+   INITIAL_ADMIN_EMAIL=yvangodimomo@gmail.com
+   INITIAL_ADMIN_PASSWORD=auto-generated-by-render
+   INITIAL_ADMIN_NAME=Super Administrateur
+   ```
+
+   The frontend is configured to use:
+   ```
+   VITE_API_URL=https://protege-lecture-backend.onrender.com/api
    ```
 
 4. **Deploy**
