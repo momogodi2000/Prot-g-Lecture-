@@ -13,8 +13,35 @@ async function importExcelToDatabase() {
     // Initialize database
     const db = await initializeDatabase();
     
-    // Path to your Excel file
-    const excelPath = path.join(process.cwd(), 'Exceel-sheet-book', 'Inventaire de la bibliothèque Protege QV.xlsx');
+    // Path to your Excel file - try different possible names
+    const possiblePaths = [
+      path.join(process.cwd(), 'Exceel-sheet-book', 'Inventaire de la bibliothèque Protege QV.xlsx'),
+      path.join(process.cwd(), 'Exceel-sheet-book', 'Inventaire de la bibliothèque Protege QV.xlsx'),
+      path.join(process.cwd(), 'Exceel-sheet-book')
+    ];
+
+    let excelPath;
+    let foundFile = false;
+
+    // Try to find the Excel file
+    const fs = await import('fs');
+    const excelDir = path.join(process.cwd(), 'Exceel-sheet-book');
+    
+    if (fs.existsSync(excelDir)) {
+      const files = fs.readdirSync(excelDir);
+      const excelFile = files.find(file => file.endsWith('.xlsx') || file.endsWith('.xls'));
+      if (excelFile) {
+        excelPath = path.join(excelDir, excelFile);
+        foundFile = true;
+      }
+    }
+
+    if (!foundFile) {
+      console.log('❌ Excel file not found. Please check:');
+      console.log('   - The file exists in Exceel-sheet-book/ directory');
+      console.log('   - The file is a .xlsx or .xls format');
+      return;
+    }
     
     console.log(`📁 Reading Excel file: ${excelPath}`);
     
@@ -33,12 +60,34 @@ async function importExcelToDatabase() {
       return;
     }
     
-    // First row is headers, get them
-    const headers = jsonData[0];
-    console.log('📋 Headers found:', headers);
+    // Find the actual header row (might not be the first row)
+    let headerRowIndex = 0;
+    let headers = jsonData[0];
     
-    // Skip header row and process data
-    const dataRows = jsonData.slice(1);
+    // Look for a row with proper headers
+    for (let i = 0; i < Math.min(5, jsonData.length); i++) {
+      const row = jsonData[i];
+      if (row && row.some(cell => 
+        typeof cell === 'string' && (
+          cell.toLowerCase().includes('titre') || 
+          cell.toLowerCase().includes('auteur') || 
+          cell.toLowerCase().includes('title') || 
+          cell.toLowerCase().includes('author') ||
+          cell.toLowerCase().includes('nom') ||
+          cell.toLowerCase().includes('livre')
+        )
+      )) {
+        headerRowIndex = i;
+        headers = row;
+        break;
+      }
+    }
+    
+    console.log('📋 Headers found at row', headerRowIndex + 1, ':', headers);
+    
+    // Skip to data rows
+    const dataRows = jsonData.slice(headerRowIndex + 1);
+    console.log(`📋 Processing ${dataRows.length} data rows`);
     
     // Get admin for adding books
     const admin = db.prepare('SELECT id FROM administrateurs LIMIT 1').get();
@@ -46,6 +95,8 @@ async function importExcelToDatabase() {
       console.log('❌ No admin found. Please run seed script first.');
       return;
     }
+    
+    console.log(`👤 Using admin ID: ${admin.id}`);
     
     // Get default category for books without category
     let defaultCategory = db.prepare('SELECT id FROM categories WHERE nom = ?').get('Général');
@@ -169,19 +220,37 @@ function mapRowToBookData(row, headers) {
     }
   });
   
+  // Function to map language values to database accepted values
+  const mapLanguage = (langValue) => {
+    if (!langValue) return 'FR';
+    const lang = String(langValue).toUpperCase().trim();
+    
+    // Map common language values to database codes
+    if (lang.includes('FRANÇAIS') || lang.includes('FRENCH') || lang === 'FRANÇAIS' || lang === 'FR') {
+      return 'FR';
+    } else if (lang.includes('ENGLISH') || lang.includes('ANGLAIS') || lang === 'EN' || lang === 'AN') {
+      return 'EN';
+    } else if (lang.includes('SPANISH') || lang.includes('ESPAGNOL') || lang === 'ES') {
+      return 'ES';
+    } else if (lang.includes('GERMAN') || lang.includes('ALLEMAND') || lang === 'DE') {
+      return 'DE';
+    } else {
+      return 'AUTRE'; // Default for unknown languages
+    }
+  };
+  
   // Map common Excel column names to our database fields
-  // You may need to adjust these based on your actual Excel headers
   return {
     titre: cleanValue(data.titre || data.nom || data.title || data['nom du livre'] || data['titre du livre']),
     auteur: cleanValue(data.auteur || data.author || data['nom auteur'] || data['nom de l\'auteur']),
     resume: cleanValue(data.resume || data.description || data.synopsis || data['résumé']),
-    categorie: cleanValue(data.categorie || data.category || data['catégorie'] || data.type),
-    annee_publication: parseInt(cleanValue(data['annee publication'] || data['année'] || data.year || data.date)),
-    langue: cleanValue(data.langue || data.language || 'FR'),
+    categorie: cleanValue(data.categorie || data.category || data['catégorie'] || data.type || data.genre),
+    annee_publication: parseInt(cleanValue(data['annee publication'] || data['année'] || data.year || data.date || data['année de publication'])),
+    langue: mapLanguage(cleanValue(data.langue || data.language || data['langue'])),
     nombre_pages: parseInt(cleanValue(data.pages || data['nombre pages'] || data['nb pages'])),
-    nombre_exemplaires: parseInt(cleanValue(data.quantite || data['nombre exemplaires'] || data.stock || 1)),
+    nombre_exemplaires: parseInt(cleanValue(data.quantite || data['nombre exemplaires'] || data.stock || data['nombre de copies disponibles'] || 1)),
     editeur: cleanValue(data.editeur || data.publisher || data['maison édition']),
-    isbn: cleanValue(data.isbn || data['numéro isbn'] || data['no isbn']),
+    isbn: cleanValue(data.isbn || data['numéro isbn'] || data['no isbn'] || data['id du livre']),
     nationalite: cleanValue(data.nationalite || data.nationality || 'Inconnue')
   };
 }

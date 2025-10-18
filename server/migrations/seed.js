@@ -42,8 +42,8 @@ async function createSuperAdmin(db) {
   if (existingAdmin.count === 0) {
     console.log('👤 Creating initial super admin...');
     
-    const defaultPassword = process.env.INITIAL_ADMIN_PASSWORD || 'Admin123!';
-    const email = process.env.INITIAL_ADMIN_EMAIL || 'admin@protegeqv.org';
+    const defaultPassword = process.env.INITIAL_ADMIN_PASSWORD || '@Douala237';
+    const email = process.env.INITIAL_ADMIN_EMAIL || 'yvangodimomo@gmail.com';
     const nomComplet = process.env.INITIAL_ADMIN_NAME || 'Super Administrateur';
     
     const saltRounds = 12;
@@ -139,7 +139,7 @@ async function seedSampleBooks(db) {
     
     // Get first admin and some categories/authors
     const admin = db.prepare('SELECT id FROM administrateurs LIMIT 1').get();
-    const categories = db.prepare('SELECT id FROM categories ORDER BY order_affichage LIMIT 3').all();
+    const categories = db.prepare('SELECT id FROM categories ORDER BY ordre_affichage LIMIT 3').all();
     const authors = db.prepare('SELECT id FROM auteurs ORDER BY id LIMIT 5').all();
 
     if (!admin || categories.length === 0 || authors.length === 0) {

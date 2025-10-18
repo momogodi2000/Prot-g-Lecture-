@@ -60,11 +60,11 @@ const runMigrations = () => {
       CONSTRAINT check_statut CHECK (statut IN ('actif', 'inactif'))
     )`,
     
-    // Copy existing data (excluding firebase_uid)
-    `INSERT INTO administrateurs_new (id, email, nom_complet, role, privileges, photo_profil, telephone, date_creation, date_derniere_connexion, statut, cree_par)
-     SELECT id, email, nom_complet, role, privileges, photo_profil, telephone, date_creation, date_derniere_connexion, statut, cree_par
+    // Copy existing data (excluding firebase_uid) with a default password_hash
+    `INSERT INTO administrateurs_new (id, email, password_hash, nom_complet, role, privileges, photo_profil, telephone, date_creation, date_derniere_connexion, statut, cree_par)
+     SELECT id, email, 'temp_password_to_be_updated', nom_complet, role, privileges, photo_profil, telephone, date_creation, date_derniere_connexion, statut, cree_par
      FROM administrateurs
-     WHERE EXISTS (SELECT 1 FROM sqlite_master WHERE type='table' AND name='administrateurs')`,
+     WHERE EXISTS (SELECT 1 FROM sqlite_master WHERE type='table' AND name='administrateurs' AND sql LIKE '%firebase_uid%')`,
     
     // Drop old table and rename new one
     `DROP TABLE IF EXISTS administrateurs`,
@@ -396,7 +396,18 @@ const insertDefaultData = () => {
         ['mode_maintenance', 'false', 'boolean', 'Activer/désactiver le mode maintenance'],
         ['notifications_email_actives', 'true', 'boolean', 'Activer/désactiver les notifications email'],
         ['langue_defaut', 'fr', 'string', 'Langue par défaut de l application'],
-        ['theme_defaut', 'light', 'string', 'Thème par défaut (light/dark)']
+        ['theme_defaut', 'light', 'string', 'Thème par défaut (light/dark)'],
+        ['ouverture_lundi', 'true', 'boolean', 'Ouvert le lundi'],
+        ['ouverture_mardi', 'true', 'boolean', 'Ouvert le mardi'],
+        ['ouverture_mercredi', 'true', 'boolean', 'Ouvert le mercredi'],
+        ['ouverture_jeudi', 'true', 'boolean', 'Ouvert le jeudi'],
+        ['ouverture_vendredi', 'true', 'boolean', 'Ouvert le vendredi'],
+        ['ouverture_samedi', 'true', 'boolean', 'Ouvert le samedi'],
+        ['ouverture_dimanche', 'false', 'boolean', 'Ouvert le dimanche'],
+        ['heure_ouverture', '09:00', 'string', 'Heure d\'ouverture (format HH:MM)'],
+        ['heure_fermeture', '18:00', 'string', 'Heure de fermeture (format HH:MM)'],
+        ['pause_debut', '12:00', 'string', 'Début de pause (format HH:MM)'],
+        ['pause_fin', '14:00', 'string', 'Fin de pause (format HH:MM)']
       ];
 
       defaultParams.forEach(param => insertParam.run(param));

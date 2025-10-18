@@ -4,6 +4,7 @@ import { getDatabase } from '../config/database.js';
 import { authenticateToken, requirePrivilege } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { generateReservationNumber } from '../utils/helpers.js';
+import emailService from '../services/email.js';
 
 const router = express.Router();
 
@@ -152,11 +153,12 @@ router.post('/', [
   const db = getDatabase();
 
   try {
-    // Check if book exists and is available
+    // Check if book exists and is available, include author info for email
     const book = db.prepare(`
-      SELECT id, titre, exemplaires_disponibles, statut 
-      FROM livres 
-      WHERE id = ? AND statut = 'disponible' AND exemplaires_disponibles > 0
+      SELECT l.id, l.titre, l.exemplaires_disponibles, l.statut, a.nom_complet as auteur_nom
+      FROM livres l
+      LEFT JOIN auteurs a ON l.auteur_id = a.id
+      WHERE l.id = ? AND l.statut = 'disponible' AND l.exemplaires_disponibles > 0
     `).get(livre_id);
 
     if (!book) {
@@ -166,8 +168,42 @@ router.post('/', [
       });
     }
 
-    // Check if date is not in the past
+    // Check for booking conflicts - if the same book is already booked for the same date and time slot
+    const existingBooking = db.prepare(`
+      SELECT COUNT(*) as count 
+      FROM reservations r
+      WHERE r.livre_id = ? AND r.date_souhaitee = ? AND r.creneau = ? 
+      AND r.statut IN ('en_attente', 'validee')
+    `).get(livre_id, date_souhaitee, creneau);
+
+    if (existingBooking.count > 0) {
+      return res.status(400).json({
+        error: 'Ce livre est déjà réservé pour cette date et ce créneau horaire',
+        code: 'BOOKING_CONFLICT'
+      });
+    }
+
+    // Check NGO opening hours
     const requestedDate = new Date(date_souhaitee);
+    const dayOfWeek = requestedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    // Get opening hours configuration from database
+    const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+    const dayParamKey = `ouverture_${dayNames[dayOfWeek]}`;
+    
+    const isOpenOnDay = db.prepare(
+      'SELECT valeur FROM parametres_systeme WHERE cle = ?'
+    ).get(dayParamKey);
+    
+    if (!isOpenOnDay || isOpenOnDay.valeur === 'false') {
+      const dayName = dayNames[dayOfWeek];
+      return res.status(400).json({
+        error: `Le centre est fermé le ${dayName}`,
+        code: 'CLOSED_DAY'
+      });
+    }
+
+    // Check if date is not in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -228,6 +264,36 @@ router.post('/', [
     );
 
     const reservationId = result.lastInsertRowid;
+
+    // Prepare reservation data for emails
+    const reservationData = {
+      id: reservationId,
+      numero_reservation,
+      livre_id,
+      nom_visiteur,
+      email_visiteur,
+      telephone_visiteur,
+      date_souhaitee,
+      creneau,
+      commentaire,
+      statut: 'en_attente'
+    };
+
+    // Send emails asynchronously (don't wait for them to complete)
+    setImmediate(async () => {
+      try {
+        // Send confirmation to user
+        await emailService.sendReservationConfirmation(reservationData, book);
+        
+        // Send notification to admin
+        await emailService.sendReservationNotification(reservationData, book);
+        
+        console.log(`📧 Emails sent for reservation ${numero_reservation}`);
+      } catch (emailError) {
+        console.error('Error sending emails for reservation:', emailError);
+        // Don't fail the reservation if email fails
+      }
+    });
 
     res.status(201).json({
       message: 'Réservation créée avec succès',
@@ -311,14 +377,23 @@ router.put('/:id/status', authenticateToken, requirePrivilege('reservations', 'u
   const db = getDatabase();
 
   try {
-    // Check if reservation exists
-    const reservation = db.prepare('SELECT id, statut FROM reservations WHERE id = ?').get(id);
-    if (!reservation) {
+    // Get reservation with book and author details for email
+    const reservationWithDetails = db.prepare(`
+      SELECT r.*, l.titre as livre_titre, a.nom_complet as auteur_nom
+      FROM reservations r
+      LEFT JOIN livres l ON r.livre_id = l.id
+      LEFT JOIN auteurs a ON l.auteur_id = a.id
+      WHERE r.id = ?
+    `).get(id);
+
+    if (!reservationWithDetails) {
       return res.status(404).json({
         error: 'Réservation non trouvée',
         code: 'RESERVATION_NOT_FOUND'
       });
     }
+
+    const oldStatus = reservationWithDetails.statut;
 
     // Update reservation status
     db.prepare(`
@@ -328,17 +403,41 @@ router.put('/:id/status', authenticateToken, requirePrivilege('reservations', 'u
     `).run(statut, remarque_admin || null, new Date().toISOString(), req.user.id, id);
 
     // If reservation is validated, decrease available copies
-    if (statut === 'validee' && reservation.statut === 'en_attente') {
+    if (statut === 'validee' && oldStatus === 'en_attente') {
       db.prepare(
         'UPDATE livres SET exemplaires_disponibles = exemplaires_disponibles - 1 WHERE id = (SELECT livre_id FROM reservations WHERE id = ?)'
       ).run(id);
     }
 
     // If reservation is cancelled or rejected, increase available copies back
-    if ((statut === 'annulee' || statut === 'refusee') && reservation.statut === 'validee') {
+    if ((statut === 'annulee' || statut === 'refusee') && oldStatus === 'validee') {
       db.prepare(
         'UPDATE livres SET exemplaires_disponibles = exemplaires_disponibles + 1 WHERE id = (SELECT livre_id FROM reservations WHERE id = ?)'
       ).run(id);
+    }
+
+    // Prepare book data for email
+    const bookData = {
+      id: reservationWithDetails.livre_id,
+      titre: reservationWithDetails.livre_titre,
+      auteur_nom: reservationWithDetails.auteur_nom
+    };
+
+    // Send email notification to user about status change (async)
+    if (statut === 'validee' || statut === 'refusee') {
+      setImmediate(async () => {
+        try {
+          await emailService.sendReservationUpdate(
+            reservationWithDetails, 
+            bookData, 
+            statut, 
+            remarque_admin
+          );
+          console.log(`📧 Status update email sent for reservation ${reservationWithDetails.numero_reservation}`);
+        } catch (emailError) {
+          console.error('Error sending status update email:', emailError);
+        }
+      });
     }
 
     // Log activity
