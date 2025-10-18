@@ -128,7 +128,13 @@ router.get('/', authenticateToken, [
 
 // POST /api/reservations - Create a new reservation (public endpoint)
 router.post('/', [
-  body('livre_id').isInt({ min: 1 }).withMessage('L\'ID du livre est requis'),
+  body('livre_id').custom((value) => {
+    const num = parseInt(value);
+    if (isNaN(num) || num < 1) {
+      throw new Error('L\'ID du livre doit être un nombre entier valide');
+    }
+    return true;
+  }),
   body('nom_visiteur').isLength({ min: 2 }).withMessage('Le nom du visiteur est requis'),
   body('email_visiteur').isEmail().withMessage('Email valide requis'),
   body('telephone_visiteur').isLength({ min: 8 }).withMessage('Numéro de téléphone requis'),
@@ -151,6 +157,9 @@ router.post('/', [
     date_souhaitee, creneau, commentaire
   } = req.body;
 
+  // Ensure livre_id is properly converted to integer
+  const bookId = parseInt(livre_id);
+
   console.log('Reservation request:', req.body);
 
   const db = getDatabase();
@@ -162,7 +171,7 @@ router.post('/', [
       FROM livres l
       LEFT JOIN auteurs a ON l.auteur_id = a.id
       WHERE l.id = ? AND l.statut = 'disponible' AND l.exemplaires_disponibles > 0
-    `).get(livre_id);
+    `).get(bookId);
 
     if (!book) {
       return res.status(400).json({
@@ -177,7 +186,7 @@ router.post('/', [
       FROM reservations r
       WHERE r.livre_id = ? AND r.date_souhaitee = ? AND r.creneau = ? 
       AND r.statut IN ('en_attente', 'validee')
-    `).get(livre_id, date_souhaitee, creneau);
+    `).get(bookId, date_souhaitee, creneau);
 
     if (existingBooking.count > 0) {
       return res.status(400).json({
@@ -262,7 +271,7 @@ router.post('/', [
         telephone_visiteur, date_souhaitee, creneau, commentaire, statut
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-      numero_reservation, livre_id, nom_visiteur, email_visiteur,
+      numero_reservation, bookId, nom_visiteur, email_visiteur,
       telephone_visiteur, date_souhaitee, creneau, commentaire || null, 'en_attente'
     );
 
@@ -272,7 +281,7 @@ router.post('/', [
     const reservationData = {
       id: reservationId,
       numero_reservation,
-      livre_id,
+      livre_id: bookId,
       nom_visiteur,
       email_visiteur,
       telephone_visiteur,
