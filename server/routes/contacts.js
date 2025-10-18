@@ -3,6 +3,7 @@ import { body, query, validationResult } from 'express-validator';
 import { getDatabase } from '../config/database.js';
 import { authenticateToken, requirePrivilege } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { generateUnsubscribeToken } from '../utils/helpers.js';
 
 const router = express.Router();
 
@@ -149,13 +150,17 @@ router.post('/', [
 
     // Update daily statistics
     const today = new Date().toISOString().split('T')[0];
-    db.prepare(`
-      INSERT INTO statistiques_journalieres (date, messages_recus)
-      VALUES (?, 1)
-      ON CONFLICT(date) DO UPDATE SET
-        messages_recus = messages_recus + 1,
-        date_calcul = datetime('now')
-    `).run(today);
+    try {
+      db.prepare(`
+        INSERT INTO statistiques_journalieres (date, messages_recus)
+        VALUES (?, 1)
+        ON CONFLICT(date) DO UPDATE SET
+          messages_recus = messages_recus + 1,
+          date_calcul = CURRENT_TIMESTAMP
+      `).run(today);
+    } catch (statsError) {
+      console.warn('Error updating daily statistics:', statsError.message);
+    }
 
     res.status(201).json({
       message: 'Message envoyé avec succès',
@@ -291,11 +296,12 @@ router.put('/:id/status', authenticateToken, requirePrivilege('contact', 'update
 
 // POST /api/contacts/newsletter - Subscribe to newsletter (public endpoint)
 router.post('/newsletter', [
-  body('email').isEmail().normalizeEmail().withMessage('Email valide requis'),
+  body('email').isEmail().withMessage('Email valide requis'),
   body('nom_complet').optional().isLength({ min: 2, max: 100 }).withMessage('Nom invalide')
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.error('Newsletter validation errors:', errors.array());
     return res.status(400).json({
       error: 'Données de validation invalides',
       details: errors.array(),
@@ -305,6 +311,8 @@ router.post('/newsletter', [
 
   const { email, nom_complet } = req.body;
   const db = getDatabase();
+
+  console.log('Newsletter subscription request:', { email, nom_complet });
 
   try {
     // Check if already subscribed
@@ -329,7 +337,6 @@ router.post('/newsletter', [
     }
 
     // Generate unsubscribe token
-    const { generateUnsubscribeToken } = await import('../utils/helpers.js');
     const token = generateUnsubscribeToken();
 
     // Add new subscriber
@@ -340,13 +347,17 @@ router.post('/newsletter', [
 
     // Update daily statistics
     const today = new Date().toISOString().split('T')[0];
-    db.prepare(`
-      INSERT INTO statistiques_journalieres (date, nouvelles_inscriptions_newsletter)
-      VALUES (?, 1)
-      ON CONFLICT(date) DO UPDATE SET
-        nouvelles_inscriptions_newsletter = nouvelles_inscriptions_newsletter + 1,
-        date_calcul = datetime('now')
-    `).run(today);
+    try {
+      db.prepare(`
+        INSERT INTO statistiques_journalieres (date, nouvelles_inscriptions_newsletter)
+        VALUES (?, 1)
+        ON CONFLICT(date) DO UPDATE SET
+          nouvelles_inscriptions_newsletter = nouvelles_inscriptions_newsletter + 1,
+          date_calcul = CURRENT_TIMESTAMP
+      `).run(today);
+    } catch (statsError) {
+      console.warn('Error updating daily statistics:', statsError.message);
+    }
 
     res.status(201).json({
       message: 'Inscription à la newsletter réussie'

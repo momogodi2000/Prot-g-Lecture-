@@ -10,7 +10,9 @@ import Home from './pages/Home';
 import Books from './pages/Books';
 import BookDetails from './pages/BookDetails';
 import Groups from './pages/Groups';
+import GroupDetails from './pages/GroupDetails';
 import Events from './pages/Events';
+import EventDetails from './pages/EventDetails';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -65,7 +67,9 @@ function App() {
                   <Route path="/books" element={<Books />} />
                   <Route path="/books/:id" element={<BookDetails />} />
                   <Route path="/groups" element={<Groups />} />
+                  <Route path="/groups/:id" element={<GroupDetails />} />
                   <Route path="/events" element={<Events />} />
+                  <Route path="/events/:id" element={<EventDetails />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/contact" element={<Contact />} />
                 </Route>

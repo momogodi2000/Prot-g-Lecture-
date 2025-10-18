@@ -23,7 +23,8 @@ const BookDetails = () => {
 
   const loadBookDetails = async () => {
     try {
-      const bookData = getBook(parseInt(id));
+      setLoading(true);
+      const bookData = await getBook(parseInt(id));
       setBook(bookData);
     } catch (error) {
       console.error('Error loading book:', error);
