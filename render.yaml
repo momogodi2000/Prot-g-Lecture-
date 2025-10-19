@@ -13,8 +13,12 @@ services:
       npm cache clean --force
       npm install --verbose
       npm rebuild better-sqlite3
-      npm run migrate || echo "Migration completed with warnings"
-      npm run seed || echo "Seeding completed with warnings"
+      if [ -f backup.db ]; then
+        cp backup.db database.sqlite
+      else
+        npm run migrate || echo "Migration completed with warnings"
+        npm run seed || echo "Seeding completed with warnings"
+      fi
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:

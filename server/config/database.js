@@ -9,15 +9,20 @@ const __dirname = path.dirname(__filename);
 
 let db = null;
 
-export const initializeDatabase = () => {
+export const initializeDatabase = async () => {
   try {
     // Database path
     const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'database.sqlite');
     
-    // Ensure directory exists
-    const dbDir = path.dirname(dbPath);
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true });
+    // Try to restore from backup first
+    const { restoreDatabase } = await import('./restore-db.js');
+    const wasRestored = await restoreDatabase();
+    
+    if (!wasRestored) {
+      // Ensure directory exists
+      const dbDir = path.dirname(dbPath);
+      if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
     }
 
     // Initialize database
