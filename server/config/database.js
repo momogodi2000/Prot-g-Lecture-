@@ -23,6 +23,7 @@ export const initializeDatabase = async () => {
       const dbDir = path.dirname(dbPath);
       if (!fs.existsSync(dbDir)) {
         fs.mkdirSync(dbDir, { recursive: true });
+      }
     }
 
     // Initialize database
