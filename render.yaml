@@ -5,7 +5,6 @@ services:
     env: node
     plan: free
     region: oregon
-    nodeVersion: 20.19.0
     buildCommand: |
       echo "Node.js version: $(node --version)"
       echo "NPM version: $(npm --version)"
@@ -41,12 +40,12 @@ services:
       - key: INITIAL_ADMIN_NAME
         value: Super Administrateur
 
-  # Frontend Static Site
-  - type: static
+  # Frontend Service
+  - type: web
     name: protege-lecture-frontend
-    env: static
+    env: node
+    plan: free
     region: oregon
-    nodeVersion: 20.19.0
     buildCommand: |
       echo "Node.js version: $(node --version)"
       echo "NPM version: $(npm --version)"
@@ -54,8 +53,9 @@ services:
       npm cache clean --force
       npm install --verbose
       npm run build
-    staticPublishPath: ./dist
-    pullRequestPreviewsEnabled: false
+    startCommand: npm run preview
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: VITE_API_URL
         value: https://protege-lecture-backend.onrender.com/api
