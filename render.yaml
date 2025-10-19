@@ -11,6 +11,7 @@ services:
       rm -f package-lock.json
       npm cache clean --force
       npm install --verbose
+      npm install sqlite3 better-sqlite3 --build-from-source
       npm rebuild better-sqlite3
       if [ -f backup.db ]; then
         cp backup.db database.sqlite
