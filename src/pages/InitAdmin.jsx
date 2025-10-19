@@ -38,12 +38,12 @@ const InitAdmin = () => {
 
         // Check for existing admin
         const existingAdmin = db.queryOne(
-          'SELECT * FROM administrateurs WHERE firebase_uid = ? OR email = ?',
-          ['kYw89vT9VlfXkRL1HeruzSUGrl53', 'yvangodimomo@gmail.com']
+          'SELECT * FROM administrateurs WHERE email = ?',
+          ['yvangodimomo@gmail.com']
         );
         
         // Get all admins for debugging
-        const allAdmins = db.query('SELECT id, email, firebase_uid, nom_complet, role, statut FROM administrateurs');
+        const allAdmins = db.query('SELECT id, email, nom_complet, role, statut FROM administrateurs');
         
         setDebugInfo(prev => ({ 
           ...prev, 
@@ -88,8 +88,8 @@ const InitAdmin = () => {
 
       // Check if admin already exists
       const existingAdmin = db.queryOne(
-        'SELECT * FROM administrateurs WHERE firebase_uid = ? OR email = ?',
-        ['kYw89vT9VlfXkRL1HeruzSUGrl53', 'yvangodimomo@gmail.com']
+        'SELECT * FROM administrateurs WHERE email = ?',
+        ['yvangodimomo@gmail.com']
       );
 
       if (existingAdmin) {
@@ -99,13 +99,16 @@ const InitAdmin = () => {
         return;
       }
 
+      // Use the default password hash from database initialization
+      const defaultPasswordHash = '$2b$12$dummy.hash.for.initial.admin';
+
       // Insert the admin that was created by the script
       const result = db.run(
-        `INSERT INTO administrateurs (firebase_uid, email, nom_complet, role, statut, date_creation)
+        `INSERT INTO administrateurs (email, password_hash, nom_complet, role, statut, date_creation)
          VALUES (?, ?, ?, ?, ?, ?)`,
         [
-          'kYw89vT9VlfXkRL1HeruzSUGrl53',
           'yvangodimomo@gmail.com',
+          defaultPasswordHash,
           'momo godi yvan',
           'super_admin',
           'actif',
@@ -117,8 +120,8 @@ const InitAdmin = () => {
 
       // Verify insertion
       const newAdmin = db.queryOne(
-        'SELECT * FROM administrateurs WHERE firebase_uid = ?',
-        ['kYw89vT9VlfXkRL1HeruzSUGrl53']
+        'SELECT * FROM administrateurs WHERE email = ?',
+        ['yvangodimomo@gmail.com']
       );
 
       if (newAdmin) {
@@ -182,7 +185,7 @@ const InitAdmin = () => {
                 {debugInfo.adminDetails && (
                   <>
                     <p><strong>ID:</strong> {debugInfo.adminDetails.id}</p>
-                    <p><strong>Firebase UID:</strong> {debugInfo.adminDetails.firebase_uid}</p>
+                    <p><strong>Nom:</strong> {debugInfo.adminDetails.nom_complet}</p>
                     <p><strong>Status:</strong> {debugInfo.adminDetails.statut}</p>
                   </>
                 )}

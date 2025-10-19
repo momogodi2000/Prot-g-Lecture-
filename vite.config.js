@@ -93,6 +93,17 @@ export default defineConfig({
     plugins: () => [],
   },
   
+  // Resolve configuration to prevent Firebase bundling issues
+  resolve: {
+    alias: {
+      // Prevent Firebase imports from causing build issues
+      'firebase/app': join(__dirname, 'src/utils/firebase-stub.js'),
+      'firebase/auth': join(__dirname, 'src/utils/firebase-stub.js'),
+      'firebase/messaging': join(__dirname, 'src/utils/firebase-stub.js'),
+      'firebase/analytics': join(__dirname, 'src/utils/firebase-stub.js'),
+    },
+  },
+  
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -111,7 +122,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'firebase': ['firebase/app', 'firebase/auth', 'firebase/messaging'],
           'ui-vendor': ['lucide-react', 'framer-motion'],
           'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'query-vendor': ['@tanstack/react-query'],
@@ -157,7 +167,6 @@ export default defineConfig({
       'lucide-react',
       'framer-motion',
     ],
-    exclude: ['@firebase/app'],
   },
   
   // Define environment variables
