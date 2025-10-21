@@ -4,13 +4,13 @@ import { formatRelativeTime } from '../../utils/formatters';
 import Card from '../common/Card';
 import Badge from '../common/Badge';
 import { 
-  BookOpen, 
-  Calendar, 
-  Users, 
-  Mail,
-  Newspaper,
-  MessageSquare 
-} from 'lucide-react';
+  BookOpenIcon, 
+  CalendarIcon, 
+  UsersIcon, 
+  MailIcon,
+  NewspaperIcon,
+  MessageSquareIcon 
+} from '../common/Icons';
 
 const ActivityFeed = ({ limit = 10 }) => {
   const [activities, setActivities] = useState([]);
@@ -35,16 +35,16 @@ const ActivityFeed = ({ limit = 10 }) => {
 
   const getActivityIcon = (module) => {
     const icons = {
-      livres: BookOpen,
-      reservations: Calendar,
-      groupes: Users,
-      evenements: Calendar,
-      actualites: Newspaper,
-      contact: MessageSquare,
-      newsletter: Mail,
-      administration: Users
+      livres: BookOpenIcon,
+      reservations: CalendarIcon,
+      groupes: UsersIcon,
+      evenements: CalendarIcon,
+      actualites: NewspaperIcon,
+      contact: MessageSquareIcon,
+      newsletter: MailIcon,
+      administration: UsersIcon
     };
-    return icons[module] || BookOpen;
+    return icons[module] || BookOpenIcon;
   };
 
   const getActivityColor = (action) => {

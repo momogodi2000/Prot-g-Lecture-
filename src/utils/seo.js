@@ -15,17 +15,18 @@ export const getOrganizationSchema = () => ({
   legalName: 'Protégé QV ONG',
   url: siteUrl,
   logo: `${siteUrl}/logo.png`,
-  foundingDate: '2020',
+  foundingDate: '1995',
   contactPoint: {
     '@type': 'ContactPoint',
-    telephone: '+237-6-XXXX-XXXX',
+    telephone: '+237-699-936-028',
     contactType: 'Customer Service',
-    email: import.meta.env.VITE_CONTACT_EMAIL || 'yvangodimomo@gmail.com',
+    email: import.meta.env.VITE_CONTACT_EMAIL || 'mail@protegeqv.org',
     areaServed: 'CM',
     availableLanguage: ['French', 'English']
   },
   address: {
     '@type': 'PostalAddress',
+    streetAddress: 'Rond point Express, Biyem-Assi',
     addressLocality: 'Yaoundé',
     addressCountry: 'CM'
   },

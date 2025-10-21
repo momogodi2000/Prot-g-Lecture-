@@ -125,6 +125,88 @@ export const useAuthors = () => {
   return { authors, loading, loadAuthors };
 };
 
+export const useAdminBooks = (filters = {}) => {
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState(null);
+
+  useEffect(() => {
+    loadBooks();
+  }, [JSON.stringify(filters)]);
+
+  const loadBooks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Build query parameters for admin books API
+      const params = {};
+      if (filters.search) params.search = filters.search;
+      if (filters.limit) params.limit = filters.limit;
+      if (filters.offset) params.offset = filters.offset;
+
+      const response = await apiService.getAdminBooks(params);
+      setBooks(response.books || []);
+      setPagination(response.pagination || null);
+    } catch (err) {
+      console.error('Error loading admin books:', err);
+      setError(err.message);
+      setBooks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createBook = async (bookData) => {
+    try {
+      const response = await apiService.createAdminBook(bookData);
+      toast.success('Livre ajouté avec succès');
+      loadBooks();
+      return response;
+    } catch (err) {
+      console.error('Error creating admin book:', err);
+      toast.error('Erreur lors de l\'ajout du livre');
+      throw err;
+    }
+  };
+
+  const updateBook = async (id, bookData) => {
+    try {
+      await apiService.updateAdminBook(id, bookData);
+      toast.success('Livre mis à jour avec succès');
+      loadBooks();
+    } catch (err) {
+      console.error('Error updating admin book:', err);
+      toast.error('Erreur lors de la mise à jour du livre');
+      throw err;
+    }
+  };
+
+  const deleteBook = async (id) => {
+    try {
+      await apiService.deleteAdminBook(id);
+      toast.success('Livre supprimé avec succès');
+      loadBooks();
+    } catch (err) {
+      console.error('Error deleting admin book:', err);
+      toast.error('Erreur lors de la suppression du livre');
+      throw err;
+    }
+  };
+
+  return {
+    books,
+    loading,
+    error,
+    pagination,
+    loadBooks,
+    createBook,
+    updateBook,
+    deleteBook
+  };
+};
+
 export const useCategories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);

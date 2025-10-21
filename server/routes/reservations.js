@@ -35,12 +35,11 @@ router.get('/', authenticateToken, [
         r.telephone_visiteur, r.date_souhaitee, r.creneau, r.commentaire,
         r.statut, r.date_creation, r.date_validation, r.date_visite,
         r.remarque_admin, r.notification_envoyee,
-        l.id as livre_id, l.titre as livre_titre,
-        a.nom_complet as auteur_nom,
+        b.id as livre_id, b.title as livre_titre,
+        b.author as auteur_nom,
         adm.nom_complet as validateur_nom
       FROM reservations r
-      LEFT JOIN livres l ON r.livre_id = l.id
-      LEFT JOIN auteurs a ON l.auteur_id = a.id
+      LEFT JOIN Book b ON r.livre_id = b.id
       LEFT JOIN administrateurs adm ON r.valide_par = adm.id
       WHERE 1=1
     `;
@@ -65,7 +64,7 @@ router.get('/', authenticateToken, [
     }
 
     if (search) {
-      query += ` AND (r.nom_visiteur LIKE ? OR r.email_visiteur LIKE ? OR r.numero_reservation LIKE ? OR l.titre LIKE ?)`;
+      query += ` AND (r.nom_visiteur LIKE ? OR r.email_visiteur LIKE ? OR r.numero_reservation LIKE ? OR b.title LIKE ?)`;
       const searchTerm = `%${search}%`;
       params.push(searchTerm, searchTerm, searchTerm, searchTerm);
     }
@@ -79,7 +78,7 @@ router.get('/', authenticateToken, [
     let countQuery = `
       SELECT COUNT(*) as total
       FROM reservations r
-      LEFT JOIN livres l ON r.livre_id = l.id
+      LEFT JOIN Book b ON r.livre_id = b.id
       WHERE 1=1
     `;
     const countParams = [];
@@ -100,7 +99,7 @@ router.get('/', authenticateToken, [
     }
 
     if (search) {
-      countQuery += ` AND (r.nom_visiteur LIKE ? OR r.email_visiteur LIKE ? OR r.numero_reservation LIKE ? OR l.titre LIKE ?)`;
+      countQuery += ` AND (r.nom_visiteur LIKE ? OR r.email_visiteur LIKE ? OR r.numero_reservation LIKE ? OR b.title LIKE ?)`;
       const searchTerm = `%${search}%`;
       countParams.push(searchTerm, searchTerm, searchTerm, searchTerm);
     }
@@ -167,10 +166,9 @@ router.post('/', [
   try {
     // Check if book exists and is available, include author info for email
     const book = db.prepare(`
-      SELECT l.id, l.titre, l.exemplaires_disponibles, l.statut, a.nom_complet as auteur_nom
-      FROM livres l
-      LEFT JOIN auteurs a ON l.auteur_id = a.id
-      WHERE l.id = ? AND l.statut = 'disponible' AND l.exemplaires_disponibles > 0
+      SELECT id, title, copies_available, author
+      FROM Book
+      WHERE id = ? AND copies_available > 0
     `).get(bookId);
 
     if (!book) {
@@ -333,12 +331,11 @@ router.get('/:id', authenticateToken, asyncHandler(async (req, res) => {
         r.telephone_visiteur, r.date_souhaitee, r.creneau, r.commentaire,
         r.statut, r.date_creation, r.date_validation, r.date_visite,
         r.remarque_admin, r.notification_envoyee,
-        l.id as livre_id, l.titre as livre_titre,
-        a.nom_complet as auteur_nom,
+        b.id as livre_id, b.title as livre_titre,
+        b.author as auteur_nom,
         adm.nom_complet as validateur_nom
       FROM reservations r
-      LEFT JOIN livres l ON r.livre_id = l.id
-      LEFT JOIN auteurs a ON l.auteur_id = a.id
+      LEFT JOIN Book b ON r.livre_id = b.id
       LEFT JOIN administrateurs adm ON r.valide_par = adm.id
       WHERE r.id = ?
     `;

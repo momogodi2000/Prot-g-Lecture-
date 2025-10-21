@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FileExcelIcon, FileCsvIcon } from '../common/Icons';
 import apiService from '../../services/api';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
@@ -38,59 +39,82 @@ export default function BulkImport({ isOpen, onClose, onSuccess }) {
 
     const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
     
-    if (!['csv', 'txt'].includes(fileExtension)) {
-      toast.error('Seuls les fichiers CSV et TXT sont acceptés');
+    if (!['csv', 'txt', 'xlsx', 'xls'].includes(fileExtension)) {
+      toast.error('Seuls les fichiers CSV, XLSX et XLS sont acceptés');
       return;
     }
 
     parseFile(selectedFile);
   };
 
-  const parseFile = (file) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const text = e.target.result;
-        const lines = text.split('\n').filter(line => line.trim());
-        
-        // Skip header row if present
-        const dataLines = lines[0].toLowerCase().includes('titre') ? lines.slice(1) : lines;
-        
-        const parsedBooks = dataLines.map((line, index) => {
-          // Support both comma and semicolon separators
-          const separator = line.includes(';') ? ';' : ',';
-          const fields = line.split(separator).map(f => f.trim().replace(/^"|"$/g, ''));
-          
-          return {
-            rowNumber: index + 1,
-            title_fr: fields[0] || '',
-            title_en: fields[1] || fields[0] || '', // Use French title as fallback
-            author: fields[2] || 'Inconnu',
-            isbn: fields[3] || '',
-            category: fields[4] || 'Non classé',
-            language: fields[5] || 'fr',
-            pages: fields[6] ? parseInt(fields[6]) : null,
-            publisher: fields[7] || '',
-            publication_year: fields[8] ? parseInt(fields[8]) : null,
-            quantity: fields[9] ? parseInt(fields[9]) : 1,
-            price: fields[10] ? parseFloat(fields[10]) : null,
-            description_fr: fields[11] || '',
-            description_en: fields[12] || '',
-            valid: !!(fields[0] && fields[2]) // Must have title and author
-          };
-        }).filter(book => book.title_fr); // Remove empty rows
+  const parseFile = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
 
-        setPreview(parsedBooks);
+    try {
+      // Try to use the validation endpoint first
+      const response = await apiService.request('/admin/books/import/validate', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          // Don't set Content-Type, let browser set it with boundary for multipart/form-data
+        }
+      });
+
+      if (response.success) {
+        setPreview(response.preview);
         setStep(2);
-        toast.success(`${parsedBooks.length} livres détectés`);
-      } catch (error) {
-        console.error('Parse error:', error);
-        toast.error('Erreur lors de la lecture du fichier');
+        toast.success(`${response.preview.length} livres détectés`);
+        return;
       }
-    };
+    } catch (error) {
+      console.warn('Validation endpoint failed, trying local parsing:', error);
+    }
 
-    reader.readAsText(file);
+    // Fallback: parse locally
+    try {
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      let parsedBooks = [];
+
+      if (fileExtension === 'csv' || fileExtension === 'txt') {
+        // Parse CSV file
+        const text = await file.text();
+        const lines = text.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+
+        parsedBooks = lines.slice(1).map((line, index) => {
+          if (!line.trim()) return null;
+          
+          const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+          const book = {};
+          
+          headers.forEach((header, idx) => {
+            book[header.toLowerCase()] = values[idx] || '';
+          });
+
+          // Map to standard format
+          return {
+            rowNumber: index + 2,
+            valid: !!(book.title || book.titre) && !!(book.author || book.auteur),
+            title: book.title || book.titre || '',
+            author: book.author || book.auteur || '',
+            genre: book.genre || book.catégorie || 'Général',
+            publication_year: parseInt(book.année || book.year || book['publication_year']) || new Date().getFullYear(),
+            language: book.langue || book.language || 'Français',
+            description: book.description || '',
+            copies_available: parseInt(book.quantity || book['copies_available'] || book.quantité) || 1,
+            location: book.location || 'Général'
+          };
+        }).filter(book => book && book.valid);
+      }
+
+      setPreview(parsedBooks);
+      setStep(2);
+      toast.success(`${parsedBooks.length} livres détectés`);
+    } catch (error) {
+      console.error('Parse error:', error);
+      toast.error('Erreur lors de la lecture du fichier');
+    }
   };
 
   const handleImport = async () => {
@@ -108,71 +132,29 @@ export default function BulkImport({ isOpen, onClose, onSuccess }) {
         }
 
         try {
-          // Find or create author
-          let existingAuthor = existingAuthors.find(author => 
-            author.nom_complet.toLowerCase() === book.author.toLowerCase()
-          );
-          let authorId;
-
-          if (existingAuthor) {
-            authorId = existingAuthor.id;
-          } else {
-            // Create new author
-            const authorResponse = await apiService.createAuthor({
-              nom_complet: book.author
-            });
-            authorId = authorResponse.authorId;
-            
-            // Add to local cache
-            setExistingAuthors(prev => [...prev, {
-              id: authorId,
-              nom_complet: book.author
-            }]);
-          }
-
-          // Find or create category
-          let existingCategory = existingCategories.find(category => 
-            category.nom.toLowerCase() === book.category.toLowerCase()
-          );
-          let categoryId;
-
-          if (existingCategory) {
-            categoryId = existingCategory.id;
-          } else {
-            // Create new category
-            const categoryResponse = await apiService.createCategory({
-              nom: book.category
-            });
-            categoryId = categoryResponse.categoryId;
-            
-            // Add to local cache
-            setExistingCategories(prev => [...prev, {
-              id: categoryId,
-              nom: book.category
-            }]);
-          }
-
-          // Create book - map fields to match API expected format
-          await apiService.createBook({
-            titre: book.title_fr,
-            resume: book.description_fr || book.description_en || 'Imported book',
-            auteur_id: authorId,
-            categorie_id: categoryId,
-            annee_publication: book.publication_year || new Date().getFullYear(),
-            langue: book.language?.toUpperCase() === 'FR' ? 'FR' : 'EN',
-            nombre_exemplaires: book.quantity || 1,
-            isbn: book.isbn || null,
-            editeur: book.publisher || null,
-            nombre_pages: book.pages || null,
-            image_couverture: null,
-            tags: null,
-            cote: null,
-            statut: 'disponible'
+          // Generate unique book_id if not provided
+          const book_id = book.book_id || `IMP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Create book using the new Book table structure
+          const response = await apiService.createAdminBook({
+            book_id: book_id,
+            title: book.title,
+            author: book.author,
+            genre: book.genre,
+            publication_year: book.publication_year,
+            language: book.language,
+            description: book.description,
+            copies_available: book.copies_available,
+            location: book.location
           });
 
-          successCount++;
+          if (response && response.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
         } catch (error) {
-          console.error(`Error importing book ${book.title_fr}:`, error);
+          console.error(`Error importing book ${book.title}:`, error);
           errorCount++;
         }
       }
@@ -324,16 +306,16 @@ Le Petit Prince,The Little Prince,Antoine de Saint-Exupéry,978-0156012195,Litt�
                         {book.rowNumber}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        {book.title_fr || <span className="text-red-500">Manquant</span>}
+                        {book.title || <span className="text-red-500">Manquant</span>}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                         {book.author || <span className="text-red-500">Manquant</span>}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {book.category}
+                        {book.genre}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {book.quantity}
+                        {book.copies_available}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         {book.valid ? (

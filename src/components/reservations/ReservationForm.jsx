@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Calendar, Clock, User, Mail, Phone, MessageSquare } from 'lucide-react';
+import { CalendarIcon, ClockIcon, UserIcon, MailIcon, PhoneIcon, MessageSquareIcon } from '../common/Icons';
 import { reservationSchema } from '../../utils/validators';
 import { useReservations } from '../../hooks/useReservations';
 import Input from '../common/Input';
@@ -62,7 +62,7 @@ const ReservationForm = ({ book, isOpen, onClose, onSuccess }) => {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Réserver: ${book?.titre}`}
+      title={`Réserver: ${book?.title || book?.titre}`}
       size="lg"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -71,18 +71,18 @@ const ReservationForm = ({ book, isOpen, onClose, onSuccess }) => {
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               <div className="w-16 h-24 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                <Calendar className="h-8 w-8 text-gray-400" />
+                <CalendarIcon className="h-8 w-8 text-gray-400" />
               </div>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">
-                {book?.titre}
+                {book?.title || book?.titre}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {book?.auteur_nom} • {book?.annee_publication}
+                {book?.author || book?.auteur_nom} • {book?.publication_year || book?.annee_publication}
               </p>
               <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                {book?.exemplaires_disponibles} exemplaire(s) disponible(s)
+                {book?.copies_available || book?.exemplaires_disponibles} exemplaire(s) disponible(s)
               </p>
             </div>
           </div>
@@ -92,7 +92,7 @@ const ReservationForm = ({ book, isOpen, onClose, onSuccess }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="Nom complet"
-            icon={User}
+            icon={UserIcon}
             {...register('nom_visiteur')}
             error={errors.nom_visiteur?.message}
             placeholder="Jean Dupont"
@@ -102,7 +102,7 @@ const ReservationForm = ({ book, isOpen, onClose, onSuccess }) => {
           <Input
             label="Email"
             type="email"
-            icon={Mail}
+            icon={MailIcon}
             {...register('email_visiteur')}
             error={errors.email_visiteur?.message}
             placeholder="jean@example.com"
@@ -113,7 +113,7 @@ const ReservationForm = ({ book, isOpen, onClose, onSuccess }) => {
         <Input
           label="Téléphone"
           type="tel"
-          icon={Phone}
+          icon={PhoneIcon}
           {...register('telephone_visiteur')}
           error={errors.telephone_visiteur?.message}
           placeholder="+237 6XX XX XX XX"
@@ -126,7 +126,7 @@ const ReservationForm = ({ book, isOpen, onClose, onSuccess }) => {
           <Input
             label="Date souhaitée"
             type="date"
-            icon={Calendar}
+            icon={CalendarIcon}
             {...register('date_souhaitee')}
             error={errors.date_souhaitee?.message}
             min={minDate}
@@ -146,7 +146,7 @@ const ReservationForm = ({ book, isOpen, onClose, onSuccess }) => {
         {/* Comment */}
         <Textarea
           label="Commentaire (optionnel)"
-          icon={MessageSquare}
+          icon={MessageSquareIcon}
           {...register('commentaire')}
           error={errors.commentaire?.message}
           placeholder="Avez-vous des remarques particulières ?"

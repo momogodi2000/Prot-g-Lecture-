@@ -63,18 +63,18 @@ const Settings = () => {
             />
             <Input
               label="Adresse"
-              defaultValue="Rond-Point Express, Yaoundé"
+              defaultValue="Rond point Express, Biyem-Assi, Yaoundé"
               icon={LogoIcon}
             />
             <Input
               label="Téléphone"
-              defaultValue="+237 6XX XX XX XX"
+              defaultValue="+237 699 936 028"
               icon={LogoIcon}
             />
             <Input
               label="Email"
               type="email"
-              defaultValue="contact@protegeqv.org"
+              defaultValue="mail@protegeqv.org"
               icon={LogoIcon}
             />
           </div>

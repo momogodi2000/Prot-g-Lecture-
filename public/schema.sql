@@ -302,9 +302,9 @@ CREATE INDEX IF NOT EXISTS idx_logs_date ON logs_activite(date_action);
 -- Paramètres système par défaut
 INSERT OR IGNORE INTO parametres_systeme (cle, valeur, type, description) VALUES
 ('nom_centre', 'Centre de Lecture Protégé QV', 'string', 'Nom du centre de lecture'),
-('adresse', 'Rond-Point Express, Yaoundé, Cameroun', 'string', 'Adresse complète'),
-('telephone', '+237 6XX XX XX XX', 'string', 'Numéro de téléphone'),
-('email_contact', 'contact@protegeqv.org', 'string', 'Email de contact'),
+('adresse', 'Rond point Express, Biyem-Assi, Yaoundé, Cameroun', 'string', 'Adresse complète'),
+('telephone', '+237 699 936 028', 'string', 'Numéro de téléphone'),
+('email_contact', 'mail@protegeqv.org', 'string', 'Email de contact'),
 ('max_reservations_jour', '20', 'number', 'Nombre maximum de réservations par jour'),
 ('max_reservations_creneau', '10', 'number', 'Nombre maximum de réservations par créneau'),
 ('delai_min_reservation', '1', 'number', 'Délai minimum de réservation en jours'),

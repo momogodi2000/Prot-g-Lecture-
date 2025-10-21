@@ -29,15 +29,20 @@ class ApiService {
     
     const config = {
       headers: {
-        'Content-Type': 'application/json',
         ...options.headers,
       },
       ...options,
     };
 
+    // Only set Content-Type for non-FormData requests
+    if (!(options.body instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+
     // Add authentication token if available
-    if (this.token) {
-      config.headers.Authorization = `Bearer ${this.token}`;
+    const token = this.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     try {
@@ -82,10 +87,11 @@ class ApiService {
       }
     });
     
+    const token = this.getToken();
     return fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': this.token ? `Bearer ${this.token}` : '',
+        'Authorization': token ? `Bearer ${token}` : '',
       },
     }).then(response => {
       if (!response.ok) {
@@ -158,6 +164,23 @@ class ApiService {
 
   async createBook(bookData) {
     return this.post('/books', bookData);
+  }
+
+  // Admin Book endpoints (new Book table structure)
+  async getAdminBooks(params = {}) {
+    return this.get('/admin/books', params);
+  }
+
+  async createAdminBook(bookData) {
+    return this.post('/admin/books', bookData);
+  }
+
+  async updateAdminBook(id, bookData) {
+    return this.put(`/admin/books/${id}`, bookData);
+  }
+
+  async deleteAdminBook(id) {
+    return this.delete(`/admin/books/${id}`);
   }
 
   async updateBook(id, bookData) {

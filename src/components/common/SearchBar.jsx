@@ -1,4 +1,4 @@
-import { Search, X } from 'lucide-react';
+import { SearchIcon, XIcon } from './Icons';
 import { useState } from 'react';
 
 const SearchBar = ({ 
@@ -20,7 +20,7 @@ const SearchBar = ({
           : 'border-gray-300 dark:border-gray-600'
         }
       `}>
-        <Search className="w-5 h-5 text-gray-400 ml-3" />
+        <SearchIcon className="ml-3" />
         
         <input
           type="text"
@@ -42,7 +42,7 @@ const SearchBar = ({
             onClick={onClear || (() => onChange(''))}
             className="mr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <XIcon />
           </button>
         )}
       </div>

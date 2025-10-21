@@ -12,6 +12,29 @@ const LogoIcon = ({ className }) => (
 
 const BookCard = ({ book, isAdmin = false, onDelete }) => {
   const navigate = useNavigate();
+  
+  // Support both old and new book table structures
+  const normalizedBook = {
+    id: book.id,
+    title: book.title || book.titre,
+    author: book.author || book.auteur_nom,
+    category: book.category || book.categorie_nom,
+    genre: book.genre,
+    publication_year: book.publication_year || book.annee_publication,
+    language: book.language || book.langue,
+    description: book.description || book.resume,
+    copies_available: book.copies_available,
+    location: book.location,
+    status: book.status || book.statut || 'disponible',
+    cover_url: book.cover_url || book.couverture_url || book.image_url,
+    // Legacy fields for compatibility
+    titre: book.titre || book.title,
+    auteur_nom: book.auteur_nom || book.author,
+    categorie_nom: book.categorie_nom || book.category,
+    annee_publication: book.annee_publication || book.publication_year,
+    statut: book.statut || book.status || 'disponible'
+  };
+
   const getStatusVariant = (statut) => {
     switch (statut) {
       case 'disponible':
@@ -34,7 +57,7 @@ const BookCard = ({ book, isAdmin = false, onDelete }) => {
       case 'maintenance':
         return 'Maintenance';
       default:
-        return statut;
+        return statut || 'Disponible';
     }
   };
 
@@ -49,7 +72,11 @@ const BookCard = ({ book, isAdmin = false, onDelete }) => {
     e.preventDefault();
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) {
       try {
-        await apiService.deleteBook(book.id);
+        if (isAdmin) {
+          await apiService.deleteAdminBook(book.id);
+        } else {
+          await apiService.deleteBook(book.id);
+        }
         toast.success('Livre supprimé avec succès');
         if (onDelete) onDelete();
       } catch (error) {
@@ -63,10 +90,10 @@ const BookCard = ({ book, isAdmin = false, onDelete }) => {
     <Card hover className="h-full">
       {/* Book Cover */}
       <div className="relative aspect-[2/3] mb-4 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
-        {book.couverture_url ? (
+        {normalizedBook.cover_url ? (
           <img
-            src={book.couverture_url}
-            alt={book.titre}
+            src={normalizedBook.cover_url}
+            alt={normalizedBook.title}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -77,8 +104,8 @@ const BookCard = ({ book, isAdmin = false, onDelete }) => {
         
         {/* Status Badge */}
         <div className="absolute top-2 right-2">
-          <Badge variant={getStatusVariant(book.statut)} size="sm">
-            {getStatusLabel(book.statut)}
+          <Badge variant={getStatusVariant(normalizedBook.statut)} size="sm">
+            {getStatusLabel(normalizedBook.statut)}
           </Badge>
         </div>
       </div>
@@ -86,37 +113,39 @@ const BookCard = ({ book, isAdmin = false, onDelete }) => {
       {/* Book Info */}
       <div className="space-y-2">
         {/* Category */}
-        {book.categorie_nom && (
+        {(normalizedBook.category || normalizedBook.genre) && (
           <Badge 
             variant="primary" 
             size="sm"
             className="mb-2"
           >
-            {book.categorie_nom}
+            {normalizedBook.category || normalizedBook.genre}
           </Badge>
         )}
 
         {/* Title */}
         <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 min-h-[3rem]">
-          {book.titre}
+          {normalizedBook.title}
         </h3>
 
         {/* Author */}
         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
           <LogoIcon className="h-4 w-4 mr-1" />
-          <span className="line-clamp-1">{book.auteur_nom}</span>
+          <span className="line-clamp-1">{normalizedBook.author}</span>
         </div>
 
         {/* Year */}
-        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-          <LogoIcon className="h-4 w-4 mr-1" />
-          <span>{book.annee_publication}</span>
-        </div>
+        {normalizedBook.publication_year && (
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+            <LogoIcon className="h-4 w-4 mr-1" />
+            <span>{normalizedBook.publication_year}</span>
+          </div>
+        )}
 
         {/* Availability */}
-        {book.statut === 'disponible' && (
+        {normalizedBook.statut === 'disponible' && normalizedBook.copies_available && (
           <p className="text-sm text-green-600 dark:text-green-400">
-            {book.stock_disponible || book.exemplaires_disponibles} exemplaire(s) disponible(s)
+            {normalizedBook.copies_available} exemplaire(s) disponible(s)
           </p>
         )}
 

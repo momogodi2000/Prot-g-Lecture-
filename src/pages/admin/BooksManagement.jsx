@@ -5,7 +5,7 @@ import BookGrid from '../../components/books/BookGrid';
 import BookFilters from '../../components/books/BookFilters';
 import Button from '../../components/common/Button';
 import BulkImport from '../../components/admin/BulkImport';
-import { useBooks } from '../../hooks/useBooks';
+import { useAdminBooks } from '../../hooks/useBooks';
 
 const LogoIcon = ({ className }) => (
   <img src="/assets/logo/logo.jpg" alt="Icon" className={`${className} rounded object-cover`} />
@@ -17,7 +17,7 @@ const BooksManagement = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [showBulkImport, setShowBulkImport] = useState(false);
   
-  const { books, loading, loadBooks } = useBooks({ ...filters, search: searchTerm });
+  const { books, loading, loadBooks } = useAdminBooks({ ...filters, search: searchTerm });
 
   const handleClearFilters = () => {
     setFilters({});

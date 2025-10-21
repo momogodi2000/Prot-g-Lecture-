@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { MailIcon, PhoneIcon, MapPinIcon, SendIcon } from '../components/common/Icons';
 import { contactSchema } from '../utils/validators';
 import { useContact } from '../hooks/useContact';
 import Input from '../components/common/Input';
@@ -64,14 +64,14 @@ const Contact = () => {
             <Card>
               <div className="flex items-start space-x-4">
                 <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                  <MapPin className="h-6 w-6 text-primary-500" />
+                  <MapPinIcon className="h-6 w-6 text-primary-500" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
                     Adresse
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Rond-Point Express<br />
+                    Rond point Express, Biyem-Assi<br />
                     Yaoundé, Cameroun
                   </p>
                 </div>
@@ -81,14 +81,14 @@ const Contact = () => {
             <Card>
               <div className="flex items-start space-x-4">
                 <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                  <Phone className="h-6 w-6 text-primary-500" />
+                  <PhoneIcon className="h-6 w-6 text-primary-500" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
                     Téléphone
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    +237 6XX XX XX XX
+                    +237 699 936 028
                   </p>
                 </div>
               </div>
@@ -97,14 +97,14 @@ const Contact = () => {
             <Card>
               <div className="flex items-start space-x-4">
                 <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                  <Mail className="h-6 w-6 text-primary-500" />
+                  <MailIcon className="h-6 w-6 text-primary-500" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
                     Email
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    contact@protegeqv.org
+                    mail@protegeqv.org
                   </p>
                 </div>
               </div>
@@ -118,7 +118,7 @@ const Contact = () => {
             {success ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Send className="h-8 w-8 text-green-600" />
+                  <SendIcon className="h-8 w-8 text-green-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   Message envoyé !
@@ -158,7 +158,7 @@ const Contact = () => {
                   type="tel"
                   {...register('telephone')}
                   error={errors.telephone?.message}
-                  placeholder="+237 6XX XX XX XX"
+                  placeholder="+237 699 936 028"
                 />
 
                 <Select
@@ -183,7 +183,7 @@ const Contact = () => {
                   type="submit"
                   fullWidth
                   loading={loading}
-                  icon={Send}
+                  icon={SendIcon}
                 >
                   Envoyer le Message
                 </Button>

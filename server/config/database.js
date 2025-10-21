@@ -40,7 +40,7 @@ export const initializeDatabase = async () => {
     runMigrations();
 
     // Run initial seeding if needed
-    runInitialSeeding();
+    await runInitialSeeding();
 
     console.log(`✅ Database initialized at ${dbPath}`);
     return db;
@@ -104,6 +104,22 @@ const runMigrations = () => {
       ordre_affichage INTEGER DEFAULT 0
     )`,
 
+    // Create new Book table according to specifications
+    `CREATE TABLE IF NOT EXISTS Book (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      book_id TEXT NOT NULL UNIQUE,
+      title TEXT,
+      author TEXT,
+      genre TEXT,
+      publication_year INTEGER,
+      language TEXT,
+      description TEXT,
+      copies_available INTEGER DEFAULT 1,
+      location TEXT,
+      category TEXT
+    )`,
+
+    // Keep existing livres table for backward compatibility
     `CREATE TABLE IF NOT EXISTS livres (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       isbn TEXT,
@@ -131,7 +147,7 @@ const runMigrations = () => {
     `CREATE TABLE IF NOT EXISTS reservations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       numero_reservation TEXT UNIQUE NOT NULL,
-      livre_id INTEGER NOT NULL REFERENCES livres(id) ON DELETE CASCADE,
+      livre_id INTEGER NOT NULL REFERENCES Book(id) ON DELETE CASCADE,
       nom_visiteur TEXT NOT NULL,
       email_visiteur TEXT NOT NULL,
       telephone_visiteur TEXT NOT NULL,
@@ -395,9 +411,9 @@ const insertDefaultData = () => {
       
       const defaultParams = [
         ['nom_centre', 'Centre de Lecture Protégé QV', 'string', 'Nom du centre de lecture'],
-        ['adresse', 'Rond-Point Express, Yaoundé, Cameroun', 'string', 'Adresse complète'],
-        ['telephone', '+237 6XX XX XX XX', 'string', 'Numéro de téléphone'],
-        ['email_contact', 'contact@protegeqv.org', 'string', 'Email de contact'],
+        ['adresse', 'Rond point Express, Biyem-Assi, Yaoundé, Cameroun', 'string', 'Adresse complète'],
+        ['telephone', '+237 699 936 028', 'string', 'Numéro de téléphone'],
+        ['email_contact', 'mail@protegeqv.org', 'string', 'Email de contact'],
         ['max_reservations_jour', '20', 'number', 'Nombre maximum de réservations par jour'],
         ['max_reservations_creneau', '10', 'number', 'Nombre maximum de réservations par créneau'],
         ['delai_min_reservation', '1', 'number', 'Délai minimum de réservation en jours'],
@@ -427,7 +443,7 @@ const insertDefaultData = () => {
   }
 };
 
-const runInitialSeeding = () => {
+const runInitialSeeding = async () => {
   try {
     // Check if we need to create super admin
     const adminCount = db.prepare('SELECT COUNT(*) as count FROM administrateurs').get();
@@ -452,6 +468,14 @@ const runInitialSeeding = () => {
       console.log(`📧 Email: ${email}`);
       console.log(`🔑 Password: ${defaultPassword}`);
       console.log('⚠️  Please change the default password after first login!');
+    }
+
+    // Seed Book table
+    try {
+      const { seedBooks } = await import('../seeder/book.js');
+      seedBooks();
+    } catch (error) {
+      console.warn('Error seeding books:', error.message);
     }
   } catch (error) {
     console.warn('Error during initial seeding:', error.message);

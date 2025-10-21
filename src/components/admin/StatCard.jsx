@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUpIcon, TrendingDownIcon } from '../common/Icons';
 import Card from '../common/Card';
 import { formatNumber } from '../../utils/formatters';
 
@@ -39,9 +39,9 @@ const StatCard = ({
             {trend && trendValue && (
               <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
                 {trend === 'up' ? (
-                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <TrendingUpIcon className="mr-1" size="w-4 h-4" />
                 ) : (
-                  <TrendingDown className="h-4 w-4 mr-1" />
+                  <TrendingDownIcon className="mr-1" size="w-4 h-4" />
                 )}
                 <span>{trendValue}%</span>
               </div>

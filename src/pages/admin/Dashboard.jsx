@@ -1,21 +1,54 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  BookOpen, 
-  Calendar, 
-  Users, 
-  Mail, 
-  TrendingUp,
-  AlertCircle,
-  CheckCircle
-} from 'lucide-react';
 import Card from '../../components/common/Card';
 import StatCard from '../../components/admin/StatCard';
 import ActivityFeed from '../../components/admin/ActivityFeed';
-import { useDatabase } from '../../contexts/DatabaseContext';
+import apiService from '../../services/api';
+import toast from 'react-hot-toast';
+
+const LogoIcon = ({ className }) => (
+  <div className={`${className} rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center`}>
+    <span className="text-white font-bold text-sm">📚</span>
+  </div>
+);
+
+const BookIcon = ({ className }) => (
+  <div className={`${className} rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center`}>
+    <span className="text-blue-600 dark:text-blue-400">📖</span>
+  </div>
+);
+
+const CheckIcon = ({ className }) => (
+  <div className={`${className} rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center`}>
+    <span className="text-green-600 dark:text-green-400">✓</span>
+  </div>
+);
+
+const AlertIcon = ({ className }) => (
+  <div className={`${className} rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center`}>
+    <span className="text-yellow-600 dark:text-yellow-400">⚠</span>
+  </div>
+);
+
+const UsersIcon = ({ className }) => (
+  <div className={`${className} rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center`}>
+    <span className="text-purple-600 dark:text-purple-400">👥</span>
+  </div>
+);
+
+const MailIcon = ({ className }) => (
+  <div className={`${className} rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center`}>
+    <span className="text-indigo-600 dark:text-indigo-400">✉</span>
+  </div>
+);
+
+const CalendarIcon = ({ className }) => (
+  <div className={`${className} rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center`}>
+    <span className="text-orange-600 dark:text-orange-400">📅</span>
+  </div>
+);
 
 const Dashboard = () => {
-  const { db } = useDatabase();
   const [stats, setStats] = useState({
     totalBooks: 0,
     availableBooks: 0,
@@ -24,45 +57,33 @@ const Dashboard = () => {
     newsletterSubscribers: 0,
     unreadMessages: 0
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadStats();
   }, []);
 
-  const loadStats = () => {
+  const loadStats = async () => {
     try {
-      const totalBooksResult = db.queryOne('SELECT COUNT(*) as count FROM livres');
-      const availableBooksResult = db.queryOne(
-        'SELECT COUNT(*) as count FROM livres WHERE statut = ?',
-        ['disponible']
-      );
-      const pendingReservationsResult = db.queryOne(
-        'SELECT COUNT(*) as count FROM reservations WHERE statut = ?',
-        ['en_attente']
-      );
-      const totalGroupsResult = db.queryOne(
-        'SELECT COUNT(*) as count FROM groupes_lecture WHERE statut = ?',
-        ['actif']
-      );
-      const newsletterResult = db.queryOne(
-        'SELECT COUNT(*) as count FROM newsletter_abonnes WHERE statut = ?',
-        ['actif']
-      );
-      const unreadMessagesResult = db.queryOne(
-        'SELECT COUNT(*) as count FROM messages_contact WHERE statut = ?',
-        ['non_lu']
-      );
-
-      setStats({
-        totalBooks: totalBooksResult?.count || 0,
-        availableBooks: availableBooksResult?.count || 0,
-        pendingReservations: pendingReservationsResult?.count || 0,
-        totalGroups: totalGroupsResult?.count || 0,
-        newsletterSubscribers: newsletterResult?.count || 0,
-        unreadMessages: unreadMessagesResult?.count || 0
-      });
+      setLoading(true);
+      const response = await apiService.getAdminStats();
+      
+      if (response.stats) {
+        const statsData = response.stats.overview;
+        setStats({
+          totalBooks: statsData.total_books || 0,
+          availableBooks: statsData.active_reservations || 0, // Using available as active reservations for now
+          pendingReservations: statsData.pending_reservations || 0,
+          totalGroups: statsData.active_groups || 0,
+          newsletterSubscribers: statsData.newsletter_subscribers || 0,
+          unreadMessages: statsData.unread_messages || 0
+        });
+      }
     } catch (error) {
       console.error('Error loading stats:', error);
+      toast.error('Erreur lors du chargement des statistiques');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,7 +105,7 @@ const Dashboard = () => {
           <StatCard
             title="Livres au Catalogue"
             value={stats.totalBooks}
-            icon={BookOpen}
+            icon={BookIcon}
             color="blue"
           />
         </Link>
@@ -93,7 +114,7 @@ const Dashboard = () => {
           <StatCard
             title="Livres Disponibles"
             value={stats.availableBooks}
-            icon={CheckCircle}
+            icon={CheckIcon}
             color="green"
           />
         </Link>
@@ -102,7 +123,7 @@ const Dashboard = () => {
           <StatCard
             title="Réservations en Attente"
             value={stats.pendingReservations}
-            icon={AlertCircle}
+            icon={AlertIcon}
             color="yellow"
           />
         </Link>
@@ -111,7 +132,7 @@ const Dashboard = () => {
           <StatCard
             title="Groupes Actifs"
             value={stats.totalGroups}
-            icon={Users}
+            icon={UsersIcon}
             color="purple"
           />
         </Link>
@@ -120,7 +141,7 @@ const Dashboard = () => {
           <StatCard
             title="Abonnés Newsletter"
             value={stats.newsletterSubscribers}
-            icon={Mail}
+            icon={MailIcon}
             color="indigo"
           />
         </Link>
@@ -129,7 +150,7 @@ const Dashboard = () => {
           <StatCard
             title="Messages Non Lus"
             value={stats.unreadMessages}
-            icon={Mail}
+            icon={MailIcon}
             color="red"
           />
         </Link>
@@ -151,7 +172,7 @@ const Dashboard = () => {
                 className="block w-full p-3 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <div className="flex items-center">
-                  <BookOpen className="h-5 w-5 text-primary-500 mr-3" />
+                  <BookIcon className="h-5 w-5 mr-3" />
                   <span className="font-medium text-gray-900 dark:text-white">
                     Gérer les livres
                   </span>
@@ -162,7 +183,7 @@ const Dashboard = () => {
                 className="block w-full p-3 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <div className="flex items-center">
-                  <Calendar className="h-5 w-5 text-primary-500 mr-3" />
+                  <CalendarIcon className="h-5 w-5 mr-3" />
                   <span className="font-medium text-gray-900 dark:text-white">
                     Gérer les événements
                   </span>
@@ -173,7 +194,7 @@ const Dashboard = () => {
                 className="block w-full p-3 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <div className="flex items-center">
-                  <Users className="h-5 w-5 text-primary-500 mr-3" />
+                  <UsersIcon className="h-5 w-5 mr-3" />
                   <span className="font-medium text-gray-900 dark:text-white">
                     Gérer les groupes
                   </span>

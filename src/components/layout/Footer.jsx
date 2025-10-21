@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { MailIcon, MapPinIcon, PhoneIcon } from '../common/Icons';
 import { useState } from 'react';
 import { useNewsletter } from '../../hooks/useNewsletter';
 
@@ -46,16 +46,16 @@ const Footer = () => {
             </p>
             <div className="space-y-2 text-sm">
               <div className="flex items-center text-gray-600 dark:text-gray-400">
-                <MapPin className="h-4 w-4 mr-2" />
-                <span>Rond-Point Express, Yaoundé, Cameroun</span>
+                <MapPinIcon className="h-4 w-4 mr-2" />
+                <span>Rond point Express, Biyem-Assi, Yaoundé, Cameroun</span>
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-400">
-                <Phone className="h-4 w-4 mr-2" />
-                <span>+237 6XX XX XX XX</span>
+                <PhoneIcon className="h-4 w-4 mr-2" />
+                <span>+237 699 936 028</span>
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-400">
-                <Mail className="h-4 w-4 mr-2" />
-                <span>contact@protegeqv.org</span>
+                <MailIcon className="h-4 w-4 mr-2" />
+                <span>mail@protegeqv.org</span>
               </div>
             </div>
           </div>
